@@ -5,16 +5,13 @@
 class Ghost
 {
 	LTexture sprites[4][4][2];
-	int dir[4];
 	int state[4];
+	int dir[4];
 	bool checkIfDirectionSet[4];
 	LTexture cur[4];
-	SDL_Rect mBox[4];
 	SDL_Rect renderSize;
 	int GHOST_VEL;
 
-	int d[4];
-	int animIdx[4];
 	int nextDir[4];
 
 public:

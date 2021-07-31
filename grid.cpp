@@ -3,7 +3,8 @@
 Grid::Grid()
 {
 	coin.loadFromFile("Assets/Images/coin.png");
-	coinRenderSize = {0, 0, 24, 24};
+	int siz = 24 * scale;
+	coinRenderSize = {0, 0, siz, siz};
 }
 
 bool Grid::loadTiles(std::string map_path)
@@ -44,7 +45,7 @@ bool Grid::loadTiles(std::string map_path)
 			}
 
 			// If the number is a valid tile number
-			if ((tileType >= 0) && (tileType < TOTAL_TILE_SPRITES))
+			if ((tileType >= 0) && (tileType < 4))
 			{
 				tiles[i] = new Tile(x, y, tileType);
 			}
@@ -83,8 +84,8 @@ void Grid::render()
 {
 	for (int i = 0; i < TOTAL_TILES; i++)
 	{
-		// if (tiles[i]->getType() == 1)
-		tiles[i]->render();
+		if (tiles[i]->getType() != 3)
+			tiles[i]->render();
 	}
 	int xx = curLevel - 1;
 	for (int i = 1; i < 24; i++)
@@ -92,7 +93,10 @@ void Grid::render()
 		for (int j = 1; j < 24; j++)
 		{
 			if (isCoin[xx][i][j])
-				coin.render(posX + 32 * j + 4, posY + 32 * i + 4, &coinRenderSize);
+			{
+				int disp = TILE_WIDTH / 8;
+				coin.render(posX + TILE_WIDTH * j + disp, posY + TILE_HEIGHT * i + disp, &coinRenderSize);
+			}
 		}
 	}
 }

@@ -71,6 +71,7 @@ inline string to_string(A v)
 // Options
 inline bool noMusic = false;
 inline bool noSound = false;
+// inline bool pause = false;
 
 // Music
 inline Mix_Chunk *death = nullptr;
@@ -81,13 +82,15 @@ inline Mix_Chunk *eatGhost = nullptr;
 
 inline SDL_Renderer *gRenderer = nullptr;
 inline SDL_Window *gWindow = nullptr;
-inline int SCREEN_WIDTH = 1400;
-inline int SCREEN_HEIGHT = 1000;
-inline int LEVEL_WIDTH = 800;
-inline int LEVEL_HEIGHT = 900;
-inline double scale = 1.0;
-inline int posX = 300;
-inline int posY = 150;
+inline double scale = 0.75;
+inline int SCREEN_WIDTH = 1280;
+inline int SCREEN_HEIGHT = 720;
+inline int LEVEL_WIDTH = 800 * scale;
+inline int LEVEL_HEIGHT = 800 * scale;
+inline int posX = (SCREEN_WIDTH - LEVEL_WIDTH) / 2;
+inline int posY = 100;
+inline int winPosX = (1920 - SCREEN_WIDTH) / 2;
+inline int winPosY = (1080 - SCREEN_HEIGHT) / 2;
 inline SDL_Color WHITE_COLOR = {255, 255, 255, 255};
 inline SDL_Color YELLOW_COLOR = {255, 247, 11, 255};
 inline SDL_Color GRAY_COLOR = {191, 191, 191, 255};
@@ -97,13 +100,14 @@ inline SDL_Color BLUE_COLOR = {0, 0, 255, 255};
 inline std::string curState = "level";
 inline int curLevel = 1;
 
-inline int corners[4][2] = {{posX + 32, posY + 32},
-							{posX + 32, posY + 32 * 23},
-							{posX + 32 * 23, posY + 32 * 23},
-							{posX + 32 * 23, posY + 32}};
+inline const int TILE_WIDTH = 32 * scale;
+inline const int TILE_HEIGHT = 32 * scale;
 
-inline const int TILE_WIDTH = 32;
-inline const int TILE_HEIGHT = 32;
+inline int corners[4][2] = {{posX + TILE_WIDTH, posY + TILE_WIDTH},
+							{posX + TILE_WIDTH, posY + TILE_WIDTH * 23},
+							{posX + TILE_WIDTH * 23, posY + TILE_WIDTH * 23},
+							{posX + TILE_WIDTH * 23, posY + TILE_WIDTH}};
+
 inline const int TOTAL_TILES = 625;
 inline const int TOTAL_TILE_SPRITES = 3;
 inline const int ROWS = 25;
@@ -113,10 +117,24 @@ inline int counter = 0;
 inline bool isRandom = false;
 inline int lives = 3;
 
+//ghost information
+inline SDL_Rect ghost_mBox[4];
+inline int ghost_d[4];
+inline int ghost_animIdx[4];
+
+//pac-info
+inline int pac_d;
+inline int pac_animIdx;
+
+//other pac-info
+inline SDL_Rect other_pac_box = {0, 0, TILE_WIDTH, TILE_WIDTH};
+inline int other_pac_d;
+inline int other_pac_animIdx;
+
 inline int dx[4] = {-1, 0, 1, 0};
 inline int dy[4] = {0, 1, 0, -1};
 
-inline std::pair<int, int> pac_coor[5] = {{12, 12}, {12, 13}, {12, 15}, {12, 13}, {12, 12}};
+inline std::pair<int, int> pac_coor[5] = {{10, 12}, {9, 12}, {13, 12}, {13, 12}, {12, 12}};
 inline std::pair<int, int> ghost_coor[4] = {{1, 1}, {1, 23}, {23, 23}, {23, 1}};
 
 inline TTF_Font *smallFont = nullptr;
@@ -127,19 +145,15 @@ inline TTF_Font *hugeFont = nullptr;
 
 inline SDL_Texture *GRASS = nullptr;
 inline SDL_Texture *BRICK = nullptr;
+inline SDL_Texture *GRAD1 = nullptr;
 inline SDL_Texture *BLACK = nullptr;
 inline SDL_Texture *resumeBack = nullptr;
 inline SDL_Texture *menuBack = nullptr, *levelsBack = nullptr,
 				   *winBack = nullptr, *loseBack = nullptr,
 				   *soundBack = nullptr, *quitBack = nullptr,
-				   *gameBack = nullptr;
+				   *gameBack = nullptr, *gameBack2 = nullptr;
 
 inline SDL_Rect pacBox = {posX + 32, posY + 32, 32, 32};
-inline bool first_time = false;
-
-inline int lifes = 3;
-
-inline int score = 0;
 
 inline bool checkCollision(SDL_Rect a, SDL_Rect b)
 {
@@ -188,48 +202,9 @@ inline bool checkCollision(SDL_Rect a, SDL_Rect b)
 
 inline bool isCoin[5][25][25] = {0};
 inline int totalCoins[5] = {0};
-
-// inline int areaOfIntersection(SDL_Rect &a, SDL_Rect &b)
-// {
-
-// 	// The sides of the rectangles
-// 	int leftA, leftB;
-// 	int rightA, rightB;
-// 	int topA, topB;
-// 	int bottomA, bottomB;
-
-// 	// Calculate the sides of rect A
-// 	leftA = a.x;
-// 	rightA = a.x + a.w;
-// 	topA = a.y;
-// 	bottomA = a.y + a.h;
-
-// 	// Calculate the sides of rect B
-// 	leftB = b.x;
-// 	rightB = b.x + b.w;
-// 	topB = b.y;
-// 	bottomB = b.y + b.h;
-
-// 	// If any of the sides from A are outside of B
-// 	if (bottomA <= topB)
-// 	{
-// 		return 0;
-// 	}
-
-// 	if (topA >= bottomB)
-// 	{
-// 		return 0;
-// 	}
-
-// 	if (rightA <= leftB)
-// 	{
-// 		return 0;
-// 	}
-
-// 	if (leftA >= rightB)
-// 	{
-// 		return 0;
-// 	}
-// }
+inline int levelScore[5][2] = {0};
+inline int totalScore[2] = {0};
+inline int lifes[2];
+inline int score[2] = {0};
 
 inline int matrix[5][25][25];

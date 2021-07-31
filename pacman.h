@@ -7,19 +7,14 @@
 
 class Pacman
 {
-	LTexture pac_left[4], pac_right[4], pac_up[4], pac_down[4];
 	LTexture pac_cur;
+	LTexture pac_left[4], pac_right[4], pac_up[4], pac_down[4];
 	SDL_Rect renderSize;
-	int d;
-
-	int animIdx;
 	int nextDir;
 
 public:
 	Pacman();
-	static const int PAC_WIDTH = 32;
-	static const int PAC_HEIGHT = 32;
-	static const int PAC_VEL = 8;
+	int PAC_VEL;
 	void handleEvent(SDL_Event &e);
 	void move(Tile *tiles[]);
 	void changeDir(Tile *tiles[]);

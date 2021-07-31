@@ -14,7 +14,7 @@ bool App::Init()
 		return false;
 	}
 
-	gWindow = SDL_CreateWindow("pacman", posX, posY, SCREEN_WIDTH, SCREEN_HEIGHT,
+	gWindow = SDL_CreateWindow("pacman", winPosX, winPosY, SCREEN_WIDTH, SCREEN_HEIGHT,
 							   SDL_WINDOW_SHOWN);
 	if (gWindow == NULL)
 	{
@@ -46,6 +46,8 @@ bool App::Init()
 										 IMG_Load("Assets/Images/grass32.jpg"));
 	BRICK = SDL_CreateTextureFromSurface(gRenderer,
 										 IMG_Load("Assets/Images/brick.jpeg"));
+	GRAD1 = SDL_CreateTextureFromSurface(gRenderer,
+										 IMG_Load("Assets/Images/grad1.jpg"));
 
 	BLACK = SDL_CreateTextureFromSurface(gRenderer,
 										 IMG_Load("Assets/Images/black.jpg"));
@@ -61,8 +63,9 @@ bool App::Init()
 		gRenderer, IMG_Load("Assets/Images/volumepg.png"));
 	quitBack = SDL_CreateTextureFromSurface(gRenderer,
 											IMG_Load("Assets/Images/quitpg.png"));
-	gameBack = SDL_CreateTextureFromSurface(gRenderer,
-											IMG_Load("Assets/Images/gamepg.png"));
+	gameBack = SDL_CreateTextureFromSurface(gRenderer, IMG_Load("Assets/Images/game_back.jpeg"));
+	gameBack2 = SDL_CreateTextureFromSurface(gRenderer,
+											 IMG_Load("Assets/Images/game_back2.jpeg"));
 	resumeBack = SDL_CreateTextureFromSurface(
 		gRenderer, IMG_Load("Assets/Images/resumepg.png"));
 	resumeBack = SDL_CreateTextureFromSurface(

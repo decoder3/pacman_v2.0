@@ -20,5 +20,5 @@ SDL_Rect Tile::getBox() { return tileBox; }
 
 void Tile::render()
 {
-	SDL_RenderCopy(gRenderer, (tileType ? BRICK : BLACK), NULL, &tileBox);
+	SDL_RenderCopy(gRenderer, (tileType == 1 ? GRAD1 : BLACK), NULL, &tileBox);
 }

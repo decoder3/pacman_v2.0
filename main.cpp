@@ -1,3 +1,5 @@
+#include "server.h"
+#include "client.h"
 #include "app.h"
 #include "ghost.h"
 #include "grid.h"
@@ -7,63 +9,175 @@
 #include "sounds.h"
 using namespace std;
 
-bool mainmenuON = true;
-bool levelmenuON = false;
-bool soundsettingsON = false;
-bool quitoptionON = false; // cross avaliable on the screen
-bool gameON = false;
-bool pauseON = false;
-bool loseON = false;
-bool winON = false;
+LTexture pl[4], pd[4], pr[4], pu[4];
+int pacRenderSz = 24 * scale;
+SDL_Rect pacRenderRect = {0, 0, pacRenderSz, pacRenderSz};
 
-// home page coord
-const int powerX = 20, powerY = 20, powerW = 70, powerH = 70;
-const int playX = 511, playY = 691, playW = 381, playH = 131;
-const int volX = 1221, volY = 802, volW = 150, volH = 150;
+int mainIdx = 0;
+int modeIdx = 0;
+bool gameOn = false;
+bool gamePause = false;
+bool firstTime = false;
+string connection_state = "";
+SDL_Rect winBox = {0, 0, SCREEN_WIDTH, SCREEN_HEIGHT};
 
-// levels page coord
-const int levelnoW = 100, levelnoH = 100;
-const int level1X = 582, level1Y = 768;
-const int level2X = 272, level2Y = 381;
-const int level3X = 661, level3Y = 215;
-const int level4X = 1184, level4Y = 390;
-const int level5X = 1140, level5Y = 71;
-const int startX = 1139, startY = 760, startW = 200, startH = 200;
-const int levelBackX = 0, levelBackY = 425, lBW = 100, lBH = 150;
+LTexture mainPage[4];
+LTexture modePage[2];
 
-// volume page coord
-const int MusicX = 145, MusicY = 338;
-const int GameX = 145, GameY = 521;
-const int optW = 455, optH = 110;
-const int backHX = 1177, backHY = 812, backHW = 120, backHH = 120;
+int socket_;
 
-// quit page coord
-const int QyesX = 250 + 77, QYesY = 200 + 417, QNoX = 250 + 575,
-		  QNoY = 200 + 417;
-const int QoptW = 270, QoptH = 100;
+enum pages
+{
+	MAIN,
+	MODE,
+	INSTRUCTIONS,
+	GAME
+};
 
-// game page
-const int pauseX = 640, pauseY = 0, pauseW = 100, pauseH = 100;
+int curPage = MAIN;
 
-// pause page
-const int resumeX = 250 + 222, resumeY = 200 + 145, resumeW = 450,
-		  resumeH = 100;
-const int RbackhomeX = 250 + 83, RbackhomeY = 200 + 423, RHomeW = 200,
-		  RHomeH = 200;
-const int RreplayX = 250 + 361, RreplayY = 200 + 453, RreplayW = 50,
-		  RreplayH = 230;
-const int RvolX = 250 + 750, RVolY = 200 + 437, RvolW = 170, RvolH = 170;
+void initMain()
+{
 
-// winlose page coord
-const int homeLX = 250 + 63, homeLY = 200 + 452, homeLdim = 200;
-const int replayX = 250 + 648, replayY = 200 + 496, replayW = 240, replayH = 50;
+	for (int i = 0; i < 4; i++)
+	{
+		string imgPath = "Assets/Images/main";
+		char c = i + '0';
+		imgPath += c;
+		imgPath += ".jpg";
+		mainPage[i].loadFromFile(imgPath);
+	}
+}
 
-SDL_Rect selected;
+void render_other_player()
+{
+	int x = other_pac_d;
+	LTexture cur_texture;
+	switch (x)
+	{
+	case 0:
+		cur_texture = pl[other_pac_animIdx];
+		break;
+	case 1:
+		cur_texture = pd[other_pac_animIdx];
+		break;
+	case 2:
+		cur_texture = pr[other_pac_animIdx];
+		break;
+	case 3:
+		cur_texture = pu[other_pac_animIdx];
+		break;
+	default:
+		break;
+	}
+	cur_texture.render(other_pac_box.x + TILE_WIDTH / 8, other_pac_box.y + TILE_WIDTH / 8, &pacRenderRect);
+}
+
+void initMode()
+{
+	for (int i = 0; i < 2; i++)
+	{
+		string imgPath = "Assets/levels/level";
+		char c = (i + 1) + '0';
+		imgPath += c;
+		imgPath += ".jpg";
+		modePage[i].loadFromFile(imgPath);
+	}
+}
+
+void initLevel(int idx)
+{
+	totalCoins[idx] = 0;
+	string matrix_path = "Assets/levels/level";
+	char c = '0' + (idx + 1);
+	matrix_path += c;
+	matrix_path += ".map";
+	ifstream ss;
+	ss.open(matrix_path);
+
+	for (int i = 0; i < 25; i++)
+	{
+		for (int j = 0; j < 25; j++)
+		{
+			int x;
+			ss >> x;
+			matrix[idx][i][j] = x;
+			if (matrix[idx][i][j] == 2)
+			{
+				isCoin[idx][i][j] = true;
+				totalCoins[idx]++;
+			}
+			else
+				isCoin[idx][i][j] = false;
+		}
+	}
+	if (isCoin[idx][pac_coor[idx].first][pac_coor[idx].second])
+	{
+		isCoin[idx][pac_coor[idx].first][pac_coor[idx].second] = false;
+		totalCoins[idx]--;
+	}
+	firstTime = true;
+}
+
+void initGame()
+{
+
+	if (modeIdx == 1)
+	{
+		if (connection_state == "server")
+		{
+			socket_ = start_server();
+		}
+		else if (connection_state == "client")
+		{
+			cout << "Trying to connect ... " << endl;
+			socket_ = connect_client();
+		}
+		else
+		{
+			cout << "Invalid Argument" << endl;
+			exit(-1);
+		}
+		if (connection_state == "server")
+		{
+			send_from_server("hey_there", socket_);
+			string xyz = receive_in_server(socket_);
+			cout << xyz << endl;
+		}
+		else
+		{
+			send_from_client("hello_server", socket_);
+			string abc = receive_in_client(socket_);
+			cout << abc << endl;
+		}
+	}
+	lifes[0] = lifes[1] = 3;
+	score[0] = score[1] = 0;
+	gameOn = true;
+	curLevel = 1;
+	initLevel(0);
+	pl[0].loadFromFile("Assets/Images/pac_left1.png");
+	pl[1].loadFromFile("Assets/Images/pac_left2.png");
+	pl[2].loadFromFile("Assets/Images/pac_left1.png");
+	pl[3].loadFromFile("Assets/Images/pacman.png");
+	pr[0].loadFromFile("Assets/Images/pac_right1.png");
+	pr[1].loadFromFile("Assets/Images/pac_right2.png");
+	pr[2].loadFromFile("Assets/Images/pac_right1.png");
+	pr[3].loadFromFile("Assets/Images/pacman.png");
+	pu[0].loadFromFile("Assets/Images/pac_up1.png");
+	pu[1].loadFromFile("Assets/Images/pac_up2.png");
+	pu[2].loadFromFile("Assets/Images/pac_up1.png");
+	pu[3].loadFromFile("Assets/Images/pacman.png");
+	pd[0].loadFromFile("Assets/Images/pac_down1.png");
+	pd[1].loadFromFile("Assets/Images/pac_down2.png");
+	pd[2].loadFromFile("Assets/Images/pac_down1.png");
+	pd[3].loadFromFile("Assets/Images/pacman.png");
+}
 
 void togglePause()
 {
-	pauseON = !pauseON;
-	if (pauseON)
+	gamePause = !gamePause;
+	if (pause)
 	{
 		Sounds::getInstance()->pauseAll();
 	}
@@ -73,270 +187,87 @@ void togglePause()
 	}
 }
 
-bool interfaceHandleevent(SDL_Event &e, bool flag)
+void handleEvent(SDL_Event &e)
 {
-	if (e.type == SDL_MOUSEMOTION || e.type == SDL_MOUSEBUTTONDOWN ||
-		e.type == SDL_MOUSEBUTTONUP)
+	if (e.type == SDL_KEYDOWN)
 	{
-		// Get mouse position
-		int x, y;
-		SDL_GetMouseState(&x, &y);
-		// Check if mouse is in button
-		bool powerb = false, playb = false, volumeb = false;
-		bool level1b = false, level2b = false, level3b = false, level4b = false,
-			 level5b = false;
-		bool startb = false, lBack = false;
-		bool pauseB = false;
-		bool musicb = false, gameb = false;
-		bool backtohomeb = false;
-		bool QuitYesb = false, QuitNOb = false;
-		bool gobacktohomeb = false;
-		bool replayb = false;
-		bool Rresumeb = false, Rreplayb = false, RhomeB = false, Rvolb = false;
-		if (powerX <= x && x <= powerX + powerW && powerY <= y &&
-			y <= powerY + powerH)
-			powerb = true;
-		if (playX <= x && x <= playX + playW && playY <= y && y <= playY + playH)
-			playb = true;
-		if (volX <= x && x <= volX + volW && volY <= y && y <= volY + volH)
-			volumeb = true;
-		if (level1X <= x && x <= level1X + levelnoW && level1Y <= y &&
-			y <= level1Y + levelnoH)
-			level1b = true;
-		if (level2X <= x && x <= level2X + levelnoW && level2Y <= y &&
-			y <= level2Y + levelnoH)
-			level2b = true;
-		if (level3X <= x && x <= level3X + levelnoW && level3Y <= y &&
-			y <= level3Y + levelnoH)
-			level3b = true;
-		if (level4X <= x && x <= level4X + levelnoW && level4Y <= y &&
-			y <= level4Y + levelnoH)
-			level4b = true;
-		if (level5X <= x && x <= level5X + levelnoW && level5Y <= y &&
-			y <= level5Y + levelnoH)
-			level5b = true;
-		if (startX <= x && x <= startX + startW && startY <= y &&
-			y <= startY + startH)
-			startb = true;
-		if (levelBackX <= x && x <= levelBackX + lBW && levelBackY <= y &&
-			y <= levelBackY + lBH)
-			lBack = true;
-		if (pauseX <= x && x <= pauseX + pauseW && pauseY <= y &&
-			y <= pauseY + pauseH)
-			pauseB = true;
-		if (MusicX <= x && x <= MusicX + optW && MusicY <= y && y <= MusicY + optH)
-			musicb = true;
-		if (GameX <= x && x <= GameX + optW && GameY <= y && y <= GameY + optH)
-			gameb = true;
-		if (backHX <= x && x <= backHX + backHW && backHY <= y &&
-			y <= backHY + backHH)
-			backtohomeb = true;
-		if (QyesX <= x && x <= QyesX + QoptW && QYesY <= y && y <= QYesY + QoptH)
-			QuitYesb = true;
-		if (QNoX <= x && x <= QNoX + QoptW && QNoY <= y && y <= QNoY + QoptH)
-			QuitNOb = true;
-		if (homeLX <= x && x <= homeLX + homeLdim && homeLY <= y &&
-			y <= homeLY + homeLdim)
-			gobacktohomeb = true;
-		if (replayX <= x && x <= replayX + replayW && replayY <= y &&
-			y <= replayY + replayH)
-			replayb = true;
-
-		if (resumeX <= x && x <= resumeX + resumeW && resumeY <= y &&
-			y <= resumeY + resumeH)
-			Rresumeb = true;
-		if (RreplayX <= x && x <= RreplayX + RreplayW && RreplayY <= y &&
-			y <= RreplayY + RreplayH)
-			Rreplayb = true;
-		if (RbackhomeX <= x && x <= RbackhomeX + RHomeW && RbackhomeY <= y &&
-			y <= RbackhomeY + RHomeH)
-			RhomeB = true;
-		if (RvolX <= x && x <= RvolX + RvolW && RVolY <= y && y <= RVolY + RvolH)
-			Rvolb = true;
-
-		// one problem: on any page if we get on to some value area then flags will
-		// be true, means on menu page level flags can go true this is a problem, no
-		// such problem coz in main we are taking pages as per flags and in each
-		// iter these flags update to false
-		if (mainmenuON && playb && e.type == SDL_MOUSEBUTTONDOWN)
+		if (curPage == MAIN)
 		{
-			mainmenuON = false;
-			levelmenuON = true;
-		}
-		if (mainmenuON && powerb && e.type == SDL_MOUSEBUTTONDOWN)
-		{
-			mainmenuON = false;
-			quitoptionON = true;
-		}
-		if (quitoptionON && QuitYesb && e.type == SDL_MOUSEBUTTONDOWN)
-		{
-			mainmenuON = true;
-			quitoptionON = false;
-			flag = false;
-		}
-		if (quitoptionON && QuitNOb && e.type == SDL_MOUSEBUTTONDOWN)
-		{
-			mainmenuON = true;
-			quitoptionON = false;
-		}
-		if (mainmenuON && volumeb && e.type == SDL_MOUSEBUTTONDOWN)
-		{
-			mainmenuON = false;
-			soundsettingsON = true;
-		}
-
-		if (soundsettingsON && backtohomeb && e.type == SDL_MOUSEBUTTONDOWN)
-		{
-			soundsettingsON = false;
-			mainmenuON = true;
-		}
-		if (levelmenuON && level1b && e.type == SDL_MOUSEBUTTONDOWN)
-		{
-			curLevel = 1;
-		}
-		if (levelmenuON && level2b && e.type == SDL_MOUSEBUTTONDOWN)
-		{
-			curLevel = 2;
-		}
-		if (levelmenuON && level3b && e.type == SDL_MOUSEBUTTONDOWN)
-		{
-			curLevel = 3;
-		}
-		if (levelmenuON && level4b && e.type == SDL_MOUSEBUTTONDOWN)
-		{
-			curLevel = 4;
-		}
-		if (levelmenuON && level5b && e.type == SDL_MOUSEBUTTONDOWN)
-		{
-			curLevel = 5;
-		}
-		if (levelmenuON && startb && e.type == SDL_MOUSEBUTTONDOWN)
-		{
-			levelmenuON = false;
-			gameON = true;
-			int xx = curLevel - 1;
-			totalCoins[xx] = 0;
-			string matrix_path = "Assets/levels/level";
-			char c = curLevel + '0';
-			matrix_path += c;
-			matrix_path += ".map";
-			ifstream ss;
-			ss.open(matrix_path);
-			for (int i = 0; i < 25; i++)
+			switch (e.key.keysym.sym)
 			{
-				for (int j = 0; j < 25; j++)
-				{
-					int x;
-					ss >> x;
-					matrix[xx][i][j] = x;
-					if (!matrix[xx][i][j])
-					{
-						isCoin[xx][i][j] = true;
-						totalCoins[xx]++;
-					}
-					else
-						isCoin[xx][i][j] = false;
-				}
+			case SDLK_RETURN:
+				curPage = MODE;
+				break;
+			case SDLK_i:
+				curPage = INSTRUCTIONS;
+				break;
+			case SDLK_ESCAPE:
+				exit(0);
+				break;
+			default:
+				break;
 			}
-			isCoin[xx][pac_coor[xx].first][pac_coor[xx].second] = false;
-			totalCoins[xx]--;
-			first_time = true;
 		}
-		if (levelmenuON && lBack && e.type == SDL_MOUSEBUTTONDOWN)
+		else if (curPage == MODE)
 		{
-			levelmenuON = false;
-			mainmenuON = true;
-		}
-
-		if (gameON && pauseB && e.type == SDL_MOUSEBUTTONDOWN)
-		{
-			gameON = false;
-			togglePause();
-		}
-		else if (pauseON && pauseB && e.type == SDL_MOUSEBUTTONDOWN)
-		{
-			gameON = true;
-			togglePause();
-		}
-
-		if ((winON || loseON) && gobacktohomeb && e.type == SDL_MOUSEBUTTONDOWN)
-		{
-			winON = false;
-			loseON = false;
-			mainmenuON = true;
-		}
-		if ((winON || loseON) && replayb && e.type == SDL_MOUSEBUTTONDOWN)
-		{
-			winON = false;
-			loseON = false;
-			levelmenuON = true;
-		}
-
-		if (pauseON && Rresumeb && e.type == SDL_MOUSEBUTTONDOWN)
-		{
-			togglePause();
-			gameON = true;
-		}
-		if (pauseON && RhomeB && e.type == SDL_MOUSEBUTTONDOWN)
-		{
-			pauseON = false;
-			mainmenuON = true;
-		}
-		if (pauseON && Rvolb && e.type == SDL_MOUSEBUTTONDOWN)
-		{
-			pauseON = false;
-			soundsettingsON = true;
-		}
-		if (pauseON && Rreplayb && e.type == SDL_MOUSEBUTTONDOWN)
-		{
-			pauseON = false;
-			levelmenuON = true;
-		}
-	}
-	else if (e.type == SDL_KEYDOWN)
-	{
-		switch (e.key.keysym.sym)
-		{
-		case SDLK_s:
-			Sounds::getInstance()->toggleEnabled();
-			break;
-		case SDLK_m:
-			Sounds::getInstance()->toggleMusicEnabled();
-			Sounds::getInstance()->playNormalMusic();
-			break;
-		case SDLK_p:
-			togglePause();
-		case SDLK_SPACE:
-			if (gameON)
+			switch (e.key.keysym.sym)
 			{
-				gameON = false;
-				togglePause();
+			case SDLK_UP:
+				modeIdx = (modeIdx + 1) % 2;
+				break;
+			case SDLK_DOWN:
+				modeIdx = (modeIdx + 1) % 2;
+				break;
+			case SDLK_RETURN:
+				curPage = GAME;
+				initGame();
+				break;
+			case SDLK_BACKSPACE:
+				curPage = MAIN;
+				break;
+			default:
+				break;
 			}
-			else if (pauseON)
+		}
+		else if (curLevel == GAME)
+		{
+			switch (e.key.keysym.sym)
 			{
-				gameON = true;
+			case SDLK_s:
+				Sounds::getInstance()->toggleEnabled();
+				break;
+			case SDLK_m:
+				Sounds::getInstance()->toggleMusicEnabled();
+				Sounds::getInstance()->playNormalMusic();
+				break;
+			case SDLK_SPACE:
 				togglePause();
+			default:
+				break;
 			}
 		}
 	}
-	return (flag);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
+	connection_state = argv[1];
 	App app;
 	app.Init();
-	bool flag = true;
+	initMain();
+	initMode();
 	Grid grid;
 	Pacman pacman;
 	Ghost ghost;
+
 	SDL_Rect smallmenu;
 	smallmenu.x = 250;
 	smallmenu.y = 200;
 	smallmenu.w = 900;
 	smallmenu.h = 600;
-	std::cout << pacBox.x << "-" << pacBox.y << std::endl;
+
 	SDL_Event e;
+	bool flag = true;
 	while (flag)
 	{
 		while (SDL_PollEvent(&e) != 0)
@@ -346,128 +277,250 @@ int main()
 				flag = false;
 				break;
 			}
-			flag = interfaceHandleevent(e, flag);
-			if (gameON)
-			{
+			handleEvent(e);
+			if (gameOn)
 				pacman.handleEvent(e);
-			}
 		}
-		if (lifes == 0)
+		if (!flag)
+			break;
+		SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 0xff);
+		SDL_RenderClear(gRenderer);
+		if (gameOn)
 		{
-			gameON = false;
-			loseON = true;
-		}
-		if (score == totalCoins[curLevel - 1])
-		{
-			gameON = false;
-			winON = true;
-			ghost.reset();
-			pacman.reset();
-			curLevel = curLevel + 1;
-			if (curLevel == 6)
-				curLevel = 1;
-		}
-		if (gameON)
-		{
-			SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 0xff);
-			SDL_RenderClear(gRenderer);
-			SDL_RenderCopy(gRenderer, gameBack, NULL, NULL);
-			if (first_time)
+			if (modeIdx == 0)
 			{
-				first_time = false;
-				score = 0;
-				grid.loadTiles("Assets/levels/level" + to_string(curLevel) + ".map");
-				lifes = 3;
+
 				SDL_RenderCopy(gRenderer, gameBack, NULL, NULL);
-				grid.render();
-				pacman.render();
-				SDL_RenderPresent(gRenderer);
-				ghost.render();
-				Sounds::getInstance()->playIntro();
-				SDL_Delay(4500);
-				Sounds::getInstance()->playNormalMusic();
+				if (firstTime)
+				{
+					levelScore[curLevel - 1][0] = levelScore[curLevel - 1][1] = 0;
+					grid.loadTiles("Assets/levels/level" + to_string(curLevel) + ".map");
+					grid.render();
+					pacman.render();
+					ghost.render();
+					SDL_RenderPresent(gRenderer);
+					Sounds::getInstance()->playIntro();
+					SDL_Delay(4500);
+					Sounds::getInstance()->playNormalMusic();
+					firstTime = false;
+				}
+				else
+				{
+					string scor = to_string(score[0]);
+					string life = "X" + to_string(lifes[0]);
+					char *sco = const_cast<char *>(scor.c_str());
+					char *lif = const_cast<char *>(life.c_str());
+					SDL_Surface *surfaceMessage =
+						TTF_RenderText_Solid(font, sco, WHITE_COLOR);
+					SDL_Surface *surfaceMessage2 =
+						TTF_RenderText_Solid(font, lif, WHITE_COLOR);
+					SDL_Texture *Message = SDL_CreateTextureFromSurface(gRenderer, surfaceMessage);
+					SDL_Texture *Message2 = SDL_CreateTextureFromSurface(gRenderer, surfaceMessage2);
+					SDL_Rect masrec = {184, 22, scor.length() * 20, 40};
+					SDL_Rect masrec2 = {1133, 88, life.length() * 20, 40};
+					SDL_RenderCopy(gRenderer, Message, NULL, &masrec);
+					SDL_RenderCopy(gRenderer, Message2, NULL, &masrec2);
+
+					int x = ghost.checkCollissionWithPacman();
+					pacman.eat();
+					if (x != -1)
+					{
+						pacman.death();
+						// ghost.pacDeath(x);
+						grid.render();
+						pacman.render();
+						ghost.render();
+						Sounds::getInstance()->playSingleSound(Sounds::DYING);
+						// Mix_PlayChannel(-1, death, 0.5);
+						SDL_Delay(1500);
+						counter = 0;
+						ghost.reset();
+						pacman.reset();
+					}
+					pacman.move(grid.tiles);
+					pacman.animate();
+					ghost.move(grid.tiles);
+					ghost.animate();
+					grid.render();
+					pacman.render();
+					ghost.render();
+					//TODO:: insert a page over here!
+					if (lifes[0] == 0)
+						exit(0);
+					if (levelScore[curLevel - 1][0] + levelScore[curLevel - 1][1] == totalCoins[curLevel - 1])
+					{
+						curLevel++;
+						if (curLevel == 6)
+							curLevel = 1;
+						initLevel(curLevel - 1);
+						ghost.reset();
+						pacman.reset();
+					}
+				}
 			}
-			//
-
-			SDL_Color blue = {255, 255, 255};
-			string scor = to_string(score);
-			string life = "X" + to_string(lifes);
-			char *sco = const_cast<char *>(scor.c_str());
-			char *lif = const_cast<char *>(life.c_str());
-
-			SDL_Surface *surfaceMessage =
-				TTF_RenderText_Solid(font, sco, blue);
-			SDL_Surface *surfaceMessage2 =
-				TTF_RenderText_Solid(font, lif, blue);
-			SDL_Texture *Message = SDL_CreateTextureFromSurface(gRenderer, surfaceMessage);
-			SDL_Texture *Message2 = SDL_CreateTextureFromSurface(gRenderer, surfaceMessage2);
-			SDL_Rect masrec = {256, 12, scor.length() * 50, 73 - 12};
-			SDL_Rect masrec2 = {1190, 102, life.length() * 50, 175 - 102};
-			SDL_RenderCopy(gRenderer, Message, NULL, &masrec);
-			SDL_RenderCopy(gRenderer, Message2, NULL, &masrec2);
-			//
-
-			int x = ghost.checkCollissionWithPacman();
-			pacman.eat();
-			if (x != -1)
+			else
 			{
-				pacman.death();
-				// ghost.pacDeath(x);
-				grid.render();
-				pacman.render();
-				ghost.render();
-				Sounds::getInstance()->playSingleSound(Sounds::DYING);
-				// Mix_PlayChannel(-1, death, 0.5);
-				SDL_Delay(1500);
-				counter = 0;
-				ghost.reset();
-				pacman.reset();
+				if (connection_state == "server")
+				{
+					string s;
+					for (int i = 0; i < 4; i++)
+					{
+						s = s + to_string(ghost_mBox[i].x) + "," + to_string(ghost_mBox[i].y) + "," + to_string(ghost_d[i]) + "," + to_string(ghost_animIdx[i]) + ",";
+					}
+					s += to_string(pacBox.x) + "," + to_string(pacBox.y) + "," + to_string(pac_d) + "," + to_string(pac_animIdx) + ",";
+					s += to_string(score[0]);
+					send_from_server(s, socket_);
+					string dump = receive_in_server(socket_);
+					vector<string> v;
+					stringstream ss(dump);
+					while (ss.good())
+					{
+						string substr;
+						getline(ss, substr, ',');
+						v.push_back(substr);
+					}
+					if (v.size() != 5)
+					{
+						cout << "size not matching from client information" << endl;
+						cout << "probably client disconnected" << endl;
+						exit(0);
+						// game_count_ = 0;
+						// blink_count_ = 0;
+						// game_state_ = game_state::gameover;
+						// disconnected = true;
+					}
+					else
+					{
+						other_pac_box.x = stoi(v[0]);
+						other_pac_box.y = stoi(v[1]);
+						other_pac_d = stoi(v[2]);
+						other_pac_animIdx = stoi(v[3]);
+						score[1] = stoi(v[4]);
+					}
+				}
+				else
+				{
+					string s = to_string(pacBox.x) + "," + to_string(pacBox.y) + "," + to_string(pac_d) + "," + to_string(pac_animIdx) + ",";
+					s += to_string(score[0]);
+					send_from_client(s, socket_);
+					string in = receive_in_client(socket_);
+					vector<string> v;
+					stringstream ss(in);
+					while (ss.good())
+					{
+						string substr;
+						getline(ss, substr, ',');
+						v.push_back(substr);
+					}
+					if (v.size() != 21)
+					{
+						cout << "size not matching from server information" << endl;
+						cout << "probably server disconnected" << endl;
+						exit(0);
+						// game_count_ = 0;
+						// blink_count_ = 0;
+						// game_state_ = game_state::gameover;
+						// disconnected = true;
+					}
+					else
+					{
+						int i = 0;
+						for (int j = 0; j < 4; j++)
+						{
+							ghost_mBox[j].x = stoi(v[i++]);
+							ghost_mBox[j].y = stoi(v[i++]);
+							ghost_d[j] = stoi(v[i++]);
+							ghost_animIdx[j] = stoi(v[i++]);
+						}
+						other_pac_box.x = stoi(v[i++]);
+						other_pac_box.y = stoi(v[i++]);
+						other_pac_d = stoi(v[i++]);
+						other_pac_animIdx = stoi(v[i++]);
+						score[1] = stoi(v[i++]);
+					}
+				}
+
+				// start rendering...
+				SDL_RenderCopy(gRenderer, gameBack2, NULL, NULL);
+				if (firstTime)
+				{
+					levelScore[curLevel - 1][0] = levelScore[curLevel - 1][1] = 0;
+					grid.loadTiles("Assets/levels/level" + to_string(curLevel) + ".map");
+					grid.render();
+					pacman.render();
+					render_other_player();
+					ghost.render();
+					SDL_RenderPresent(gRenderer);
+					Sounds::getInstance()->playIntro();
+					SDL_Delay(4500);
+					Sounds::getInstance()->playNormalMusic();
+					firstTime = false;
+				}
+				else
+				{
+					LTexture score1, score2, life1, life2;
+					score1.loadFromRenderedText(font, to_string(score[0]), WHITE_COLOR);
+					score2.loadFromRenderedText(font, to_string(score[1]), WHITE_COLOR);
+					life1.loadFromRenderedText(font, "X" + to_string(lifes[0]), WHITE_COLOR);
+					life2.loadFromRenderedText(font, "X" + to_string(lifes[1]), WHITE_COLOR);
+					SDL_Rect score1_rect, score2_rect, life1_rect, life2_rect;
+					score1_rect = {159, 50, (int)(to_string(score[0]).size()) * 20, 30};
+					score2_rect = {1173, 50, (int)(to_string(score[1]).size()) * 20, 30};
+					life1_rect = {160, 90, 40, 30};
+					life2_rect = {1180, 90, 40, 30};
+					score1.render(score1_rect.x, score1_rect.y, &score1_rect);
+					score2.render(score2_rect.x, score2_rect.y, &score2_rect);
+					life1.render(life1_rect.x, life1_rect.y, &life1_rect);
+					life2.render(life2_rect.x, life2_rect.y, &life2_rect);
+
+					int x = ghost.checkCollissionWithPacman();
+					pacman.eat();
+					if (x != -1)
+					{
+						pacman.death();
+						// ghost.pacDeath(x);
+						grid.render();
+						pacman.render();
+						ghost.render();
+						Sounds::getInstance()->playSingleSound(Sounds::DYING);
+						SDL_Delay(1500);
+						counter = 0;
+						ghost.reset();
+						pacman.reset();
+					}
+					pacman.move(grid.tiles);
+					pacman.animate();
+					ghost.move(grid.tiles);
+					ghost.animate();
+					grid.render();
+					pacman.render();
+					render_other_player();
+					ghost.render();
+
+					//TODO:: insert a page over here!
+					if (lifes[0] == 0)
+						exit(0);
+					if (levelScore[curLevel - 1][0] + levelScore[curLevel - 1][1] == 100)
+					{
+						curLevel++;
+						if (curLevel == 6)
+							curLevel = 1;
+						initLevel(curLevel - 1);
+						ghost.reset();
+						pacman.reset();
+					}
+				}
 			}
-			pacman.move(grid.tiles);
-			pacman.animate();
-			ghost.move(grid.tiles);
-			ghost.animate();
-			grid.render();
-			pacman.render();
-			ghost.render();
 		}
-		else if (mainmenuON)
+		else if (curPage == MAIN)
 		{
-			SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 0xff);
-			SDL_RenderClear(gRenderer);
-			SDL_RenderCopy(gRenderer, menuBack, NULL, NULL);
-			lifes = 3;
+			mainPage[mainIdx].render(0, 0, &winBox);
+			mainIdx = (mainIdx + 1) % 4;
+			SDL_Delay(500);
 		}
-		else if (levelmenuON)
+		else if (curPage == MODE)
 		{
-			SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 0xff);
-			SDL_RenderClear(gRenderer);
-			pacman.reset();
-			SDL_RenderCopy(gRenderer, levelsBack, NULL, NULL);
-		}
-		else if (soundsettingsON)
-		{
-			SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 0xff);
-			SDL_RenderClear(gRenderer);
-			SDL_RenderCopy(gRenderer, soundBack, NULL, NULL);
-		}
-		else if (quitoptionON)
-		{
-			SDL_RenderCopy(gRenderer, quitBack, NULL, &smallmenu);
-		}
-		else if (pauseON)
-		{
-			SDL_RenderCopy(gRenderer, resumeBack, NULL, &smallmenu);
-		}
-		else if (winON)
-		{
-			SDL_RenderCopy(gRenderer, winBack, NULL, &smallmenu);
-			lifes = 3;
-		}
-		else if (loseON)
-		{
-			SDL_RenderCopy(gRenderer, loseBack, NULL, &smallmenu);
-			lifes = 3;
+			modePage[modeIdx].render(0, 0, &winBox);
 		}
 		SDL_RenderPresent(gRenderer);
 		SDL_Delay(50);

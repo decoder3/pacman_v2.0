@@ -4,36 +4,37 @@ std::mt19937 rng(std::chrono::steady_clock::now().time_since_epoch().count());
 
 Ghost::Ghost()
 {
-	renderSize = {0, 0, 24, 24};
-	int X = 32 * 23;
-	mBox[0] = {posX + 32, posY + 32, 32, 32};
-	mBox[1] = {posX + 32, posY + X, 32, 32};
-	mBox[2] = {posX + X, posY + X, 32, 32};
-	mBox[3] = {posX + X, posY + 32, 32, 32};
+	int renderWidth = 24 * scale;
+	renderSize = {0, 0, renderWidth, renderWidth};
+	int X = TILE_WIDTH * 23;
+	ghost_mBox[0] = {posX + TILE_HEIGHT, posY + TILE_HEIGHT, TILE_HEIGHT, TILE_HEIGHT};
+	ghost_mBox[1] = {posX + TILE_HEIGHT, posY + X, TILE_HEIGHT, TILE_HEIGHT};
+	ghost_mBox[2] = {posX + X, posY + X, TILE_HEIGHT, TILE_HEIGHT};
+	ghost_mBox[3] = {posX + X, posY + TILE_HEIGHT, TILE_HEIGHT, TILE_HEIGHT};
 	state[0] = state[2] = 2;
 	state[1] = state[3] = 0;
 	for (int i = 0; i < 4; i++)
 	{
-		animIdx[i] = 0;
-		d[i] = 0;
+		ghost_animIdx[i] = 0;
+		ghost_d[i] = 0;
 		cur[i] = sprites[i][0][0];
 	}
-	GHOST_VEL = 8;
+	GHOST_VEL = 8 * scale;
 	init();
 }
 
 void Ghost::reset()
 {
-	int X = 32 * 23;
-	mBox[0] = {posX + 32, posY + 32, 32, 32};
-	mBox[1] = {posX + 32, posY + X, 32, 32};
-	mBox[2] = {posX + X, posY + X, 32, 32};
-	mBox[3] = {posX + X, posY + 32, 32, 32};
+	int X = TILE_WIDTH * 23;
+	ghost_mBox[0] = {posX + TILE_HEIGHT, posY + TILE_HEIGHT, TILE_HEIGHT, TILE_HEIGHT};
+	ghost_mBox[1] = {posX + TILE_HEIGHT, posY + X, TILE_HEIGHT, TILE_HEIGHT};
+	ghost_mBox[2] = {posX + X, posY + X, TILE_HEIGHT, TILE_HEIGHT};
+	ghost_mBox[3] = {posX + X, posY + TILE_HEIGHT, TILE_HEIGHT, TILE_HEIGHT};
 	isRandom = false;
 	for (int i = 0; i < 4; i++)
 	{
-		animIdx[i] = 0;
-		d[i] = 0;
+		ghost_animIdx[i] = 0;
+		ghost_d[i] = 0;
 		cur[i] = sprites[i][0][0];
 	}
 }
@@ -64,8 +65,8 @@ void Ghost::animate()
 {
 	for (int i = 0; i < 4; i++)
 	{
-		cur[i] = sprites[i][d[i]][animIdx[i]];
-		animIdx[i] = (animIdx[i] + 1) % 2;
+		cur[i] = sprites[i][ghost_d[i]][ghost_animIdx[i]];
+		ghost_animIdx[i] = (ghost_animIdx[i] + 1) % 2;
 	}
 }
 
@@ -73,7 +74,8 @@ void Ghost::render()
 {
 	for (int i = 0; i < 4; i++)
 	{
-		cur[i].render(mBox[i].x + 4, mBox[i].y + 4, &renderSize);
+		int disp = TILE_WIDTH / 8;
+		cur[i].render(ghost_mBox[i].x + disp, ghost_mBox[i].y + disp, &renderSize);
 	}
 }
 
@@ -84,10 +86,10 @@ std::vector<int> Ghost::checkDirections(int i, Tile *tiles[])
 	{
 		int disX = GHOST_VEL * dx[j];
 		int disY = GHOST_VEL * dy[j];
-		mBox[i].x += disX;
-		mBox[i].y += disY;
+		ghost_mBox[i].x += disX;
+		ghost_mBox[i].y += disY;
 		bool flag = true;
-		if (Grid::touchesWall(mBox[i], tiles))
+		if (Grid::touchesWall(ghost_mBox[i], tiles))
 			flag = false;
 		// if (flag)
 		// {
@@ -95,7 +97,7 @@ std::vector<int> Ghost::checkDirections(int i, Tile *tiles[])
 		// 	{
 		// 		if (k != i)
 		// 		{
-		// 			if (checkCollision(mBox[i], mBox[k]))
+		// 			if (checkCollision(ghost_mBox[i], ghost_mBox[k]))
 		// 			{
 		// 				flag = false;
 		// 				break;
@@ -103,15 +105,15 @@ std::vector<int> Ghost::checkDirections(int i, Tile *tiles[])
 		// 		}
 		// 	}
 		// }
-		mBox[i].x -= disX;
-		mBox[i].y -= disY;
+		ghost_mBox[i].x -= disX;
+		ghost_mBox[i].y -= disY;
 		if (flag)
 			temp.push_back(j);
 	}
-	auto it = find(begin(temp), end(temp), d[i]);
+	auto it = find(begin(temp), end(temp), ghost_d[i]);
 	if (it != end(temp))
 	{
-		int x = (d[i] + 2) % 4;
+		int x = (ghost_d[i] + 2) % 4;
 		auto it2 = find(begin(temp), end(temp), x);
 		if (it2 != end(temp))
 		{
@@ -123,7 +125,7 @@ std::vector<int> Ghost::checkDirections(int i, Tile *tiles[])
 		int n = (int)temp.size();
 		if (n > 1)
 		{
-			int x = (d[i] + 2) % 4;
+			int x = (ghost_d[i] + 2) % 4;
 			it = find(begin(temp), end(temp), x);
 			if (it != end(temp))
 			{
@@ -140,11 +142,11 @@ void Ghost::findRandomDir(int idx, Tile *tiles[])
 	int n = (int)available_directions.size();
 	if (!n)
 	{
-		d[idx] = -1;
+		ghost_d[idx] = -1;
 		return;
 	}
 	int x = rng() % n;
-	d[idx] = available_directions[x];
+	ghost_d[idx] = available_directions[x];
 }
 
 void Ghost::move(Tile *tiles[])
@@ -153,7 +155,7 @@ void Ghost::move(Tile *tiles[])
 	{
 		for (int i = 0; i < 4; i++)
 		{
-			d[i] = (d[i] + 2) % 4;
+			ghost_d[i] = (ghost_d[i] + 2) % 4;
 		}
 		vector<int> temp = {0, 1, 2, 3};
 		random_shuffle(begin(temp), end(temp));
@@ -175,29 +177,34 @@ void Ghost::move(Tile *tiles[])
 		{
 			changeDir(i, tiles);
 		}
-		if (d[i] != -1)
+		if (ghost_d[i] != -1)
 		{
-			int disX = GHOST_VEL * dx[d[i]];
-			int disY = GHOST_VEL * dy[d[i]];
-			mBox[i].x += disX;
-			mBox[i].y += disY;
-			if (Grid::touchesWall(mBox[i], tiles))
+			int disX = GHOST_VEL * dx[ghost_d[i]];
+			int disY = GHOST_VEL * dy[ghost_d[i]];
+			ghost_mBox[i].x += disX;
+			ghost_mBox[i].y += disY;
+			if (Grid::touchesWall(ghost_mBox[i], tiles))
 			{
-				mBox[i].x -= disX;
-				mBox[i].y -= disY;
+				ghost_mBox[i].x -= disX;
+				ghost_mBox[i].y -= disY;
 			}
 		}
 		else
 		{
 			int x = rng() % 4;
-			d[i] = x;
+			ghost_d[i] = x;
 		}
 	}
 	// for (int i = 0; i < 4; i++)
 	// {
-	// 	int xx = (mBox[i].x - posX) / 32;
-	// 	int yy = (mBox[i].y - posY) / 32;
-	// cout << "{" << xx << ", " << yy << ", " << d[i] << ", " << state[i] << "} ";
+	// 	cout << "{" << ghost_mBox[i].x << ", " << ghost_mBox[i].y << ", " << posX << ", " << posY << "} ";
+	// }
+	// cout << endl;
+	// for (int i = 0; i < 4; i++)
+	// {
+	// 	int xx = (ghost_mBox[i].x - posX) / TILE_WIDTH;
+	// 	int yy = (ghost_mBox[i].y - posY) / TILE_WIDTH;
+	// 	cout << "{" << xx << ", " << yy << ", " << d[i] << ", " << state[i] << "} ";
 	// }
 	// cout << endl;
 	counter++;
@@ -212,22 +219,22 @@ void Ghost::changeDir(int idx, Tile *tiles[])
 		int i = temp[j];
 		if (i != idx)
 		{
-			if (checkCollision(mBox[i], mBox[idx]))
+			if (checkCollision(ghost_mBox[i], ghost_mBox[idx]))
 			{
-				if (d[i] == (d[idx] + 2) % 4)
+				if (ghost_d[i] == (ghost_d[idx] + 2) % 4)
 				{
-					d[idx] = (d[idx] + 2) % 4;
+					ghost_d[idx] = (ghost_d[idx] + 2) % 4;
 					state[idx] = 0;
 				}
-				d[i] = (d[i] + 2) % 4;
+				ghost_d[i] = (ghost_d[i] + 2) % 4;
 				checkIfDirectionSet[i] = checkIfDirectionSet[idx] = true;
 				state[i] = 0;
 				return;
 			}
 		}
 	}
-	int cx = (mBox[idx].x - posX) % 32;
-	int cy = (mBox[idx].y - posY) % 32;
+	int cx = (ghost_mBox[idx].x - posX) % TILE_WIDTH;
+	int cy = (ghost_mBox[idx].y - posY) % TILE_WIDTH;
 	if (cx || cy)
 		return;
 	if (!state[idx])
@@ -243,18 +250,18 @@ void Ghost::changeDir(int idx, Tile *tiles[])
 
 void Ghost::findDir(int idx)
 {
-	int ix = (mBox[idx].x - posX) / 32;
-	int iy = (mBox[idx].y - posY) / 32;
+	int ix = (ghost_mBox[idx].x - posX) / TILE_WIDTH;
+	int iy = (ghost_mBox[idx].y - posY) / TILE_WIDTH;
 	int Ix, Iy;
 	if (state[idx] == 1)
 	{
-		Ix = (corners[idx][0] - posX) / 32;
-		Iy = (corners[idx][1] - posY) / 32;
+		Ix = (corners[idx][0] - posX) / TILE_WIDTH;
+		Iy = (corners[idx][1] - posY) / TILE_WIDTH;
 	}
 	else
 	{
-		Ix = (pacBox.x - posX) / 32;
-		Iy = (pacBox.y - posY) / 32;
+		Ix = (pacBox.x - posX) / TILE_WIDTH;
+		Iy = (pacBox.y - posY) / TILE_WIDTH;
 	}
 	std::pair<int, int> ps = {Iy, Ix}, pd = {iy, ix};
 	int par[25][25];
@@ -276,7 +283,7 @@ void Ghost::findDir(int idx)
 		{
 			int X = x + dx[i];
 			int Y = y + dy[i];
-			if (X > 0 && Y > 0 && X < 24 && Y < 24 && !matrix[curLevel - 1][Y][X] &&
+			if (X > 0 && Y > 0 && X < 24 && Y < 24 && (matrix[curLevel - 1][Y][X] != 1) &&
 				par[Y][X] == -1)
 			{
 				par[Y][X] = (i + 2) % 4;
@@ -288,15 +295,12 @@ void Ghost::findDir(int idx)
 	{
 		int dd = par[ps.first][ps.second];
 		// TODO: take care of this situation. -- done
-		assert(dd != -1);
-		// if (dd == -1)
-		// {
-		// 	cout << idx << ": ";
-		// 	cout << "{" << ix << ", " << iy << "} ";
-		// 	cout << "{" << Ix << ", " << Iy << "}\n";
-		// 	SDL_Delay(3000);
-		// 	return;
-		// }
+		// assert(dd != -1);
+		if (dd == -1)
+		{
+			ghost_d[idx] = -1;
+			return;
+		}
 		ps = {ps.first + dy[dd], ps.second + dx[dd]};
 		if (ps == pd)
 		{
@@ -304,7 +308,7 @@ void Ghost::findDir(int idx)
 			// {
 			// 	if (i != idx)
 			// 	{
-			// 		if (checkCollision(mBox[i], mBox[idx]))
+			// 		if (checkCollision(ghost_mBox[i], ghost_mBox[idx]))
 			// 		{
 			// 			d[i] = (d[i] + 2) % 4;
 			// 			d[idx] = (d[idx] + 2) % 4;
@@ -315,7 +319,7 @@ void Ghost::findDir(int idx)
 			// 	}
 			// }
 			checkIfDirectionSet[idx] = true;
-			d[idx] = (dd + 2) % 4;
+			ghost_d[idx] = (dd + 2) % 4;
 			return;
 		}
 	}
@@ -325,9 +329,9 @@ int Ghost::checkCollissionWithPacman()
 {
 	for (int i = 0; i < 4; i++)
 	{
-		SDL_Rect a = mBox[i];
+		SDL_Rect a = ghost_mBox[i];
 		SDL_Rect b = pacBox;
-		int fact = 8;
+		int fact = 8 * scale;
 		a.x += fact;
 		a.y += fact;
 		a.w -= 2 * fact;
@@ -344,6 +348,6 @@ int Ghost::checkCollissionWithPacman()
 
 // void Ghost::pacDeath(int x)
 // {
-// 	mBox[x].x += 16 * dx[d[x]];
-// 	mBox[x].y += 16 * dy[d[x]];
+// 	ghost_mBox[x].x += 16 * dx[d[x]];
+// 	ghost_mBox[x].y += 16 * dy[d[x]];
 // }

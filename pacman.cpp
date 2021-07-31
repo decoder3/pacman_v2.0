@@ -3,13 +3,15 @@
 Pacman::Pacman()
 {
 	pac_cur = pac_left[0];
-	int X = 32 * pac_coor[curLevel - 1].first;
-	int Y = 32 * pac_coor[curLevel - 1].second;
-	pacBox = {posX + X, posY + Y, PAC_WIDTH, PAC_HEIGHT};
-	renderSize = {0, 0, 24, 24};
-	animIdx = 0;
+	PAC_VEL = 8 * scale;
+	int pacRenderSize = 24 * scale;
+	int X = TILE_WIDTH * pac_coor[curLevel - 1].first;
+	int Y = TILE_WIDTH * pac_coor[curLevel - 1].second;
+	pacBox = {posX + X, posY + Y, TILE_WIDTH, TILE_WIDTH};
+	renderSize = {0, 0, pacRenderSize, pacRenderSize};
+	pac_animIdx = 0;
 	nextDir = -1;
-	d = 0;
+	pac_d = 0;
 	initPlayer();
 }
 
@@ -17,23 +19,25 @@ void Pacman::reset()
 
 {
 	pac_cur = pac_left[0];
-	int X = 32 * pac_coor[curLevel - 1].first;
-	int Y = 32 * pac_coor[curLevel - 1].second;
-	pacBox = {posX + X, posY + Y, PAC_WIDTH, PAC_HEIGHT};
-	animIdx = 0;
+	int X = TILE_WIDTH * pac_coor[curLevel - 1].first;
+	int Y = TILE_WIDTH * pac_coor[curLevel - 1].second;
+	pacBox = {posX + X, posY + Y, TILE_WIDTH, TILE_WIDTH};
+	pac_animIdx = 0;
 	nextDir = -1;
-	d = 0;
+	pac_d = 0;
 }
 
 void Pacman::eat()
 {
-	int Gx = (pacBox.x + 4 - posX) / 32;
-	int Gy = (pacBox.y + 4 - posY) / 32;
+	int disEat = TILE_WIDTH * scale / 4;
+	int Gx = (pacBox.x + disEat - posX) / TILE_WIDTH;
+	int Gy = (pacBox.y + disEat - posY) / TILE_WIDTH;
 	if (isCoin[curLevel - 1][Gy][Gx])
 	{
 		Sounds::getInstance()->playMunch();
 		isCoin[curLevel - 1][Gy][Gx] = false;
-		score++;
+		score[0]++;
+		levelScore[curLevel - 1][0]++;
 	}
 }
 
@@ -41,13 +45,13 @@ void Pacman::death()
 {
 	// pacBox.x += 16 * dx[d];
 	// pacBox.y += 16 * dy[d];
-	lifes--;
+	lifes[0]--;
 }
 
 void Pacman::move(Tile *tiles[])
 {
 	changeDir(tiles);
-	switch (d)
+	switch (pac_d)
 	{
 	case 0:
 		pacBox.x = pacBox.x - PAC_VEL;
@@ -102,27 +106,28 @@ void Pacman::initPlayer()
 
 void Pacman::animate()
 {
-	switch (d)
+	switch (pac_d)
 	{
 	case 0:
-		pac_cur = pac_left[animIdx];
+		pac_cur = pac_left[pac_animIdx];
 		break;
 	case 1:
-		pac_cur = pac_down[animIdx];
+		pac_cur = pac_down[pac_animIdx];
 		break;
 	case 2:
-		pac_cur = pac_right[animIdx];
+		pac_cur = pac_right[pac_animIdx];
 		break;
 	case 3:
-		pac_cur = pac_up[animIdx];
+		pac_cur = pac_up[pac_animIdx];
 		break;
 	}
-	animIdx = (animIdx + 1) % 4;
+	pac_animIdx = (pac_animIdx + 1) % 4;
 }
 
 void Pacman::render()
 {
-	pac_cur.render(pacBox.x + 4, pacBox.y + 4, &renderSize);
+	int disp = TILE_WIDTH / 8;
+	pac_cur.render(pacBox.x + disp, pacBox.y + disp, &renderSize);
 }
 
 void Pacman::handleEvent(SDL_Event &e)
@@ -130,19 +135,19 @@ void Pacman::handleEvent(SDL_Event &e)
 	switch (e.key.keysym.sym)
 	{
 	case SDLK_LEFT:
-		if (d != 0)
+		if (pac_d != 0)
 			nextDir = 0;
 		break;
 	case SDLK_DOWN:
-		if (d != 1)
+		if (pac_d != 1)
 			nextDir = 1;
 		break;
 	case SDLK_RIGHT:
-		if (d != 2)
+		if (pac_d != 2)
 			nextDir = 2;
 		break;
 	case SDLK_UP:
-		if (d != 3)
+		if (pac_d != 3)
 			nextDir = 3;
 		break;
 	}
@@ -158,28 +163,28 @@ void Pacman::changeDir(Tile *tiles[])
 	case 0:
 		pacBox.x = pacBox.x - PAC_VEL;
 		if (!Grid::touchesWall(pacBox, tiles))
-			d = 0;
+			pac_d = 0;
 		pacBox.x += PAC_VEL;
 		break;
 	case 1:
 		pacBox.y = pacBox.y + PAC_VEL;
 		if (!Grid::touchesWall(pacBox, tiles))
-			d = 1;
+			pac_d = 1;
 		pacBox.y -= PAC_VEL;
 		break;
 	case 2:
 		pacBox.x = pacBox.x + PAC_VEL;
 		if (!Grid::touchesWall(pacBox, tiles))
-			d = 2;
+			pac_d = 2;
 		pacBox.x -= PAC_VEL;
 		break;
 	case 3:
 		pacBox.y = pacBox.y - PAC_VEL;
 		if (!Grid::touchesWall(pacBox, tiles))
-			d = 3;
+			pac_d = 3;
 		pacBox.y += PAC_VEL;
 		break;
 	}
-	if (d == nextDir)
+	if (pac_d == nextDir)
 		nextDir = -1;
 }
