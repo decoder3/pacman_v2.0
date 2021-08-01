@@ -237,24 +237,30 @@ void Ghost::changeDir(int idx, Tile *tiles[])
 	int cy = (ghost_mBox[idx].y - posY) % TILE_WIDTH;
 	if (cx || cy)
 		return;
-	// if (!state[idx])
-	// {
-	// 	checkIfDirectionSet[idx] = true;
-	// 	findRandomDir(idx, tiles);
-	// }
-	// else
-	// {
-	findDir(idx);
-	// }
+	if (!modeIdx)
+	{
+		if (state[idx])
+		{
+			findDir(idx);
+		}
+		else
+		{
+			checkIfDirectionSet[idx] = true;
+			findRandomDir(idx, tiles);
+		}
+	}
+	else
+	{
+		findDir(idx);
+	}
 }
 
 void Ghost::findDir(int idx)
 {
-	cout << "idx " << state[idx] << endl;
 	int ix = (ghost_mBox[idx].x - posX) / TILE_WIDTH;
 	int iy = (ghost_mBox[idx].y - posY) / TILE_WIDTH;
 	int Ix, Iy;
-	if (state[idx] == 1)
+	if (state[idx] == 0)
 	{
 		// Ix = (corners[idx][0] - posX) / TILE_WIDTH;
 		// Iy = (corners[idx][1] - posY) / TILE_WIDTH;

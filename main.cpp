@@ -7,7 +7,6 @@
 #include "main_menu.h"
 #include "pacman.h"
 #include "sounds.h"
-using namespace std;
 mt19937_64 rng(std::chrono::steady_clock::now().time_since_epoch().count());
 
 LTexture pl[4], pd[4], pr[4], pu[4];
@@ -283,19 +282,25 @@ int main(int argc, char *argv[])
 				flag = false;
 				break;
 			}
+			cout << "e1" << endl;
 			handleEvent(e);
+			cout << "e2" << endl;
 			if (gameOn)
 				pacman.handleEvent(e);
+			cout << "e3" << endl;
 		}
 		if (!flag)
 			break;
 		SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 0xff);
 		SDL_RenderClear(gRenderer);
+		cout << curPage << endl;
 		if (gameOn)
 		{
+			cout << "gameon" << endl;
 			if (modeIdx == 0)
 			{
 
+				cout << pacBox.x << " " << pacBox.y << endl;
 				SDL_RenderCopy(gRenderer, gameBack, NULL, NULL);
 				if (firstTime)
 				{
@@ -304,11 +309,6 @@ int main(int argc, char *argv[])
 					grid.render();
 					pacman.render();
 					ghost.render();
-					SDL_RenderPresent(gRenderer);
-					Sounds::getInstance()->playIntro();
-					SDL_Delay(4500);
-					Sounds::getInstance()->playNormalMusic();
-					firstTime = false;
 				}
 				else
 				{
@@ -616,4 +616,5 @@ int main(int argc, char *argv[])
 		}
 		SDL_Delay(45);
 	}
+	return 0;
 }
