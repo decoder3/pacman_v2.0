@@ -68,6 +68,9 @@ inline string to_string(A v)
 	return res;
 }
 
+inline int modeIdx = 0;
+inline string connection_state = "";
+
 // Options
 inline bool noMusic = false;
 inline bool noSound = false;
@@ -134,7 +137,7 @@ inline int other_pac_animIdx;
 inline int dx[4] = {-1, 0, 1, 0};
 inline int dy[4] = {0, 1, 0, -1};
 
-inline std::pair<int, int> pac_coor[5] = {{10, 12}, {9, 12}, {13, 12}, {13, 12}, {12, 12}};
+inline std::pair<int, int> pac_coor[5][2] = {{{15, 10}, {15, 14}}, {{17, 10}, {17, 14}}, {{15, 9}, {15, 15}}, {{15, 9}, {15, 15}}, {{12, 10}, {12, 14}}};
 inline std::pair<int, int> ghost_coor[4] = {{1, 1}, {1, 23}, {23, 23}, {23, 1}};
 
 inline TTF_Font *smallFont = nullptr;

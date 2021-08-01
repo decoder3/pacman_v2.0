@@ -5,39 +5,100 @@ Pacman::Pacman()
 	pac_cur = pac_left[0];
 	PAC_VEL = 8 * scale;
 	int pacRenderSize = 24 * scale;
-	int X = TILE_WIDTH * pac_coor[curLevel - 1].first;
-	int Y = TILE_WIDTH * pac_coor[curLevel - 1].second;
-	pacBox = {posX + X, posY + Y, TILE_WIDTH, TILE_WIDTH};
 	renderSize = {0, 0, pacRenderSize, pacRenderSize};
-	pac_animIdx = 0;
-	nextDir = -1;
-	pac_d = 0;
+
+	if (!modeIdx)
+	{
+		pac_cur = pac_left[0];
+		int X = TILE_WIDTH * pac_coor[curLevel - 1][0].first;
+		int Y = TILE_WIDTH * pac_coor[curLevel - 1][0].second;
+		pacBox = {posX + X, posY + Y, TILE_WIDTH, TILE_WIDTH};
+		pac_animIdx = 0;
+		nextDir = -1;
+		pac_d = 0;
+	}
+	else
+	{
+		int idx = connection_state == "server" ? 0 : 1;
+		int X = TILE_WIDTH * pac_coor[curLevel - 1][idx].first;
+		int Y = TILE_WIDTH * pac_coor[curLevel - 1][idx].second;
+		pacBox = {posX + X, posY + Y, TILE_WIDTH, TILE_WIDTH};
+		if (!idx)
+		{
+			pac_cur = pac_left[0];
+			pac_d = 0;
+		}
+		else
+		{
+			pac_cur = pac_right[0];
+			pac_d = 2;
+		}
+		pac_animIdx = 0;
+		nextDir = -1;
+	}
 	initPlayer();
 }
 
 void Pacman::reset()
 
 {
-	pac_cur = pac_left[0];
-	int X = TILE_WIDTH * pac_coor[curLevel - 1].first;
-	int Y = TILE_WIDTH * pac_coor[curLevel - 1].second;
-	pacBox = {posX + X, posY + Y, TILE_WIDTH, TILE_WIDTH};
-	pac_animIdx = 0;
-	nextDir = -1;
-	pac_d = 0;
+	if (!modeIdx)
+	{
+		pac_cur = pac_left[0];
+		int X = TILE_WIDTH * pac_coor[curLevel - 1][0].first;
+		int Y = TILE_WIDTH * pac_coor[curLevel - 1][0].second;
+		pacBox = {posX + X, posY + Y, TILE_WIDTH, TILE_WIDTH};
+		pac_animIdx = 0;
+		nextDir = -1;
+		pac_d = 0;
+	}
+	else
+	{
+		int idx = connection_state == "server" ? 0 : 1;
+		int X = TILE_WIDTH * pac_coor[curLevel - 1][idx].first;
+		int Y = TILE_WIDTH * pac_coor[curLevel - 1][idx].second;
+		pacBox = {posX + X, posY + Y, TILE_WIDTH, TILE_WIDTH};
+		if (!idx)
+		{
+			pac_cur = pac_left[0];
+			pac_d = 0;
+		}
+		else
+		{
+			pac_cur = pac_right[0];
+			pac_d = 2;
+		}
+		pac_animIdx = 0;
+		nextDir = -1;
+	}
 }
 
-void Pacman::eat()
+void Pacman::eat(bool flag)
 {
 	int disEat = TILE_WIDTH * scale / 4;
-	int Gx = (pacBox.x + disEat - posX) / TILE_WIDTH;
-	int Gy = (pacBox.y + disEat - posY) / TILE_WIDTH;
-	if (isCoin[curLevel - 1][Gy][Gx])
+	if (!flag)
 	{
-		Sounds::getInstance()->playMunch();
-		isCoin[curLevel - 1][Gy][Gx] = false;
-		score[0]++;
-		levelScore[curLevel - 1][0]++;
+		int Gx = (pacBox.x + disEat - posX) / TILE_WIDTH;
+		int Gy = (pacBox.y + disEat - posY) / TILE_WIDTH;
+		if (isCoin[curLevel - 1][Gy][Gx])
+		{
+			Sounds::getInstance()->playMunch();
+			isCoin[curLevel - 1][Gy][Gx] = false;
+			score[0]++;
+			levelScore[curLevel - 1][0]++;
+		}
+	}
+	else
+	{
+		int Gx = (other_pac_box.x + disEat - posX) / TILE_WIDTH;
+		int Gy = (other_pac_box.y + disEat - posY) / TILE_WIDTH;
+		if (isCoin[curLevel - 1][Gy][Gx])
+		{
+			Sounds::getInstance()->playMunch();
+			isCoin[curLevel - 1][Gy][Gx] = false;
+			score[1]++;
+			levelScore[curLevel - 1][1]++;
+		}
 	}
 }
 

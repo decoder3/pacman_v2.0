@@ -16,7 +16,7 @@ class Ghost
 
 public:
 	Ghost();
-	int checkCollissionWithPacman();
+	int checkCollissionWithPacman(SDL_Rect xBox);
 	static const int G_WIDTH = 35;
 	static const int G_HEIGHT = 35;
 	void handleEvent(SDL_Event &e);

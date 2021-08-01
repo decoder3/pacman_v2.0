@@ -8,17 +8,16 @@
 #include "pacman.h"
 #include "sounds.h"
 using namespace std;
+mt19937_64 rng(std::chrono::steady_clock::now().time_since_epoch().count());
 
 LTexture pl[4], pd[4], pr[4], pu[4];
 int pacRenderSz = 24 * scale;
 SDL_Rect pacRenderRect = {0, 0, pacRenderSz, pacRenderSz};
 
 int mainIdx = 0;
-int modeIdx = 0;
 bool gameOn = false;
 bool gamePause = false;
 bool firstTime = false;
-string connection_state = "";
 SDL_Rect winBox = {0, 0, SCREEN_WIDTH, SCREEN_HEIGHT};
 
 LTexture mainPage[4];
@@ -70,7 +69,18 @@ void render_other_player()
 	default:
 		break;
 	}
+	other_pac_animIdx = (other_pac_animIdx + 1) % 2;
 	cur_texture.render(other_pac_box.x + TILE_WIDTH / 8, other_pac_box.y + TILE_WIDTH / 8, &pacRenderRect);
+}
+
+void other_pac_reset()
+{
+	// int idx = connection_state == "server" ? 1 : 0;
+	// int X = TILE_WIDTH * pac_coor[curLevel - 1][idx].first;
+	// int Y = TILE_WIDTH * pac_coor[curLevel - 1][idx].second;
+	// other_pac_box = {posX + X, posY + Y, TILE_WIDTH, TILE_WIDTH};
+	// other_pac_d = idx ? 2 : 0;
+	// other_pac_animIdx = 0;
 }
 
 void initMode()
@@ -110,11 +120,6 @@ void initLevel(int idx)
 			else
 				isCoin[idx][i][j] = false;
 		}
-	}
-	if (isCoin[idx][pac_coor[idx].first][pac_coor[idx].second])
-	{
-		isCoin[idx][pac_coor[idx].first][pac_coor[idx].second] = false;
-		totalCoins[idx]--;
 	}
 	firstTime = true;
 }
@@ -321,8 +326,7 @@ int main(int argc, char *argv[])
 					SDL_RenderCopy(gRenderer, Message, NULL, &masrec);
 					SDL_RenderCopy(gRenderer, Message2, NULL, &masrec2);
 
-					int x = ghost.checkCollissionWithPacman();
-					pacman.eat();
+					int x = ghost.checkCollissionWithPacman(pacBox);
 					if (x != -1)
 					{
 						pacman.death();
@@ -336,14 +340,21 @@ int main(int argc, char *argv[])
 						counter = 0;
 						ghost.reset();
 						pacman.reset();
+						grid.render();
+						pacman.render();
+						ghost.render();
 					}
-					pacman.move(grid.tiles);
-					pacman.animate();
-					ghost.move(grid.tiles);
-					ghost.animate();
-					grid.render();
-					pacman.render();
-					ghost.render();
+					else
+					{
+						pacman.eat(0);
+						pacman.move(grid.tiles);
+						pacman.animate();
+						ghost.move(grid.tiles);
+						ghost.animate();
+						grid.render();
+						pacman.render();
+						ghost.render();
+					}
 					//TODO:: insert a page over here!
 					if (lifes[0] == 0)
 						exit(0);
@@ -473,41 +484,107 @@ int main(int argc, char *argv[])
 					life1.render(life1_rect.x, life1_rect.y, &life1_rect);
 					life2.render(life2_rect.x, life2_rect.y, &life2_rect);
 
-					int x = ghost.checkCollissionWithPacman();
-					pacman.eat();
-					if (x != -1)
+					if (connection_state == "server")
 					{
-						pacman.death();
-						// ghost.pacDeath(x);
-						grid.render();
-						pacman.render();
-						ghost.render();
-						Sounds::getInstance()->playSingleSound(Sounds::DYING);
-						SDL_Delay(1500);
-						counter = 0;
-						ghost.reset();
-						pacman.reset();
-					}
-					pacman.move(grid.tiles);
-					pacman.animate();
-					ghost.move(grid.tiles);
-					ghost.animate();
-					grid.render();
-					pacman.render();
-					render_other_player();
-					ghost.render();
+						int x = ghost.checkCollissionWithPacman(pacBox);
+						// int y = ghost.checkCollissionWithPacman(other_pac_box);
+						if (x != -1)
+						{
+							pacman.death();
+							grid.render();
+							pacman.render();
+							render_other_player();
+							ghost.render();
+							Sounds::getInstance()->playSingleSound(Sounds::DYING);
+							SDL_Delay(1500);
+							counter = 0;
+							ghost.reset();
+							pacman.reset();
+						}
+						// else if (y != -1)
+						// {
+						// 	grid.render();
+						// 	pacman.render();
+						// 	render_other_player();
+						// 	ghost.render();
+						// 	counter = 0;
+						// 	ghost.reset();
+						// 	lifes[1]--;
+						// 	// other_pac_die();
+						// }
+						else
+						{
+							int rrxx = rng() % 2;
+							pacman.eat(rrxx);
+							pacman.eat(rrxx ^ 1);
+							pacman.move(grid.tiles);
+							pacman.animate();
+							ghost.move(grid.tiles);
+							ghost.animate();
+							grid.render();
+							pacman.render();
+							render_other_player();
+							ghost.render();
+						}
 
-					//TODO:: insert a page over here!
-					if (lifes[0] == 0)
-						exit(0);
-					if (levelScore[curLevel - 1][0] + levelScore[curLevel - 1][1] == 100)
+						//TODO:: insert a page over here!
+						if (lifes[0] == 0)
+							exit(0);
+						if (levelScore[curLevel - 1][0] + levelScore[curLevel - 1][1] == totalCoins[curLevel - 1])
+						{
+							curLevel++;
+							if (curLevel == 6)
+								curLevel = 1;
+							initLevel(curLevel - 1);
+							ghost.reset();
+							pacman.reset();
+						}
+					}
+					else
 					{
-						curLevel++;
-						if (curLevel == 6)
-							curLevel = 1;
-						initLevel(curLevel - 1);
-						ghost.reset();
-						pacman.reset();
+						int x = ghost.checkCollissionWithPacman(pacBox);
+						// int y = ghost.checkCollissionWithPacman(other_pac_box);
+						if (x != -1)
+						{
+							pacman.death();
+							grid.render();
+							pacman.render();
+							ghost.render();
+							Sounds::getInstance()->playSingleSound(Sounds::DYING);
+							SDL_Delay(1500);
+							counter = 0;
+							ghost.reset();
+							pacman.reset();
+						}
+						// else if (y != -1)
+						// {
+						// }
+						else
+						{
+							int rrxx = rng() % 2;
+							pacman.eat(rrxx);
+							pacman.eat(rrxx ^ 1);
+
+							pacman.move(grid.tiles);
+							pacman.animate();
+							ghost.move(grid.tiles);
+							ghost.animate();
+							grid.render();
+							pacman.render();
+							render_other_player();
+							ghost.render();
+						}
+						if (lifes[0] == 0)
+							exit(0);
+						if (levelScore[curLevel - 1][0] + levelScore[curLevel - 1][1] == totalCoins[curLevel - 1])
+						{
+							curLevel++;
+							if (curLevel == 6)
+								curLevel = 1;
+							initLevel(curLevel - 1);
+							ghost.reset();
+							pacman.reset();
+						}
 					}
 				}
 			}

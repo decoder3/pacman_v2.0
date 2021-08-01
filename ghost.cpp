@@ -1,6 +1,6 @@
 #include "ghost.h"
 
-std::mt19937 rng(std::chrono::steady_clock::now().time_since_epoch().count());
+std::mt19937 rngg(std::chrono::steady_clock::now().time_since_epoch().count());
 
 Ghost::Ghost()
 {
@@ -145,7 +145,7 @@ void Ghost::findRandomDir(int idx, Tile *tiles[])
 		ghost_d[idx] = -1;
 		return;
 	}
-	int x = rng() % n;
+	int x = rngg() % n;
 	ghost_d[idx] = available_directions[x];
 }
 
@@ -191,7 +191,7 @@ void Ghost::move(Tile *tiles[])
 		}
 		else
 		{
-			int x = rng() % 4;
+			int x = rngg() % 4;
 			ghost_d[i] = x;
 		}
 	}
@@ -325,12 +325,12 @@ void Ghost::findDir(int idx)
 	}
 }
 
-int Ghost::checkCollissionWithPacman()
+int Ghost::checkCollissionWithPacman(SDL_Rect xBox)
 {
 	for (int i = 0; i < 4; i++)
 	{
 		SDL_Rect a = ghost_mBox[i];
-		SDL_Rect b = pacBox;
+		SDL_Rect b = xBox;
 		int fact = 8 * scale;
 		a.x += fact;
 		a.y += fact;

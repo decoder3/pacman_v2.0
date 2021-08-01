@@ -23,7 +23,7 @@ public:
 	void initPlayer();
 	void render();
 	void reset();
-	void eat();
+	void eat(bool flag);
 
 	int getX();
 	int getY();
