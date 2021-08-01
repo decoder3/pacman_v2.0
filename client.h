@@ -25,6 +25,7 @@ static int connect_client()
 	serv_addr.sin_family = AF_INET; // Internet family for IPv4 only
 	serv_addr.sin_port = htons(PORT);
 
+	// tere me mera mere me tera ip
 	// Convert IPv4 and IPv6 addresses from text to binary form
 	if (inet_pton(AF_INET, "10.184.39.81", &serv_addr.sin_addr) <= 0)
 	{

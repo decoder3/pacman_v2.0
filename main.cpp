@@ -156,7 +156,7 @@ void initGame()
 			cout << abc << endl;
 		}
 	}
-	lifes[0] = lifes[1] = 3;
+	lifes[0] = lifes[1] = 10;
 	score[0] = score[1] = 0;
 	gameOn = true;
 	curLevel = 1;
@@ -394,7 +394,7 @@ int main(int argc, char *argv[])
 					{
 						cout << "size not matching from client information" << endl;
 						cout << "probably client disconnected" << endl;
-						exit(0);
+						// exit(0);
 						// game_count_ = 0;
 						// blink_count_ = 0;
 						// game_state_ = game_state::gameover;
@@ -427,7 +427,7 @@ int main(int argc, char *argv[])
 					{
 						cout << "size not matching from server information" << endl;
 						cout << "probably server disconnected" << endl;
-						exit(0);
+						// exit(0);
 						// game_count_ = 0;
 						// blink_count_ = 0;
 						// game_state_ = game_state::gameover;
@@ -600,6 +600,6 @@ int main(int argc, char *argv[])
 			modePage[modeIdx].render(0, 0, &winBox);
 		}
 		SDL_RenderPresent(gRenderer);
-		SDL_Delay(50);
+		SDL_Delay(25);
 	}
 }
