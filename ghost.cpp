@@ -11,7 +11,7 @@ Ghost::Ghost()
 	ghost_mBox[1] = {posX + TILE_HEIGHT, posY + X, TILE_HEIGHT, TILE_HEIGHT};
 	ghost_mBox[2] = {posX + X, posY + X, TILE_HEIGHT, TILE_HEIGHT};
 	ghost_mBox[3] = {posX + X, posY + TILE_HEIGHT, TILE_HEIGHT, TILE_HEIGHT};
-	state[0] = state[2] = 2;
+	state[0] = state[2] = 1;
 	state[1] = state[3] = 0;
 	for (int i = 0; i < 4; i++)
 	{
@@ -160,7 +160,7 @@ void Ghost::move(Tile *tiles[])
 		vector<int> temp = {0, 1, 2, 3};
 		random_shuffle(begin(temp), end(temp));
 		state[temp[0]] = state[temp[1]] = 0;
-		state[temp[2]] = state[temp[3]] = 2;
+		state[temp[2]] = state[temp[3]] = 1;
 		counter++;
 		return;
 	}
@@ -237,26 +237,29 @@ void Ghost::changeDir(int idx, Tile *tiles[])
 	int cy = (ghost_mBox[idx].y - posY) % TILE_WIDTH;
 	if (cx || cy)
 		return;
-	if (!state[idx])
-	{
-		checkIfDirectionSet[idx] = true;
-		findRandomDir(idx, tiles);
-	}
-	else
-	{
-		findDir(idx);
-	}
+	// if (!state[idx])
+	// {
+	// 	checkIfDirectionSet[idx] = true;
+	// 	findRandomDir(idx, tiles);
+	// }
+	// else
+	// {
+	findDir(idx);
+	// }
 }
 
 void Ghost::findDir(int idx)
 {
+	cout << "idx " << state[idx] << endl;
 	int ix = (ghost_mBox[idx].x - posX) / TILE_WIDTH;
 	int iy = (ghost_mBox[idx].y - posY) / TILE_WIDTH;
 	int Ix, Iy;
 	if (state[idx] == 1)
 	{
-		Ix = (corners[idx][0] - posX) / TILE_WIDTH;
-		Iy = (corners[idx][1] - posY) / TILE_WIDTH;
+		// Ix = (corners[idx][0] - posX) / TILE_WIDTH;
+		// Iy = (corners[idx][1] - posY) / TILE_WIDTH;
+		Ix = (other_pac_box.x - posX) / TILE_WIDTH;
+		Iy = (other_pac_box.y - posY) / TILE_WIDTH;
 	}
 	else
 	{
