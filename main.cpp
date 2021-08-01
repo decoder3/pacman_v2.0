@@ -567,8 +567,8 @@ int main(int argc, char *argv[])
 
 							pacman.move(grid.tiles);
 							pacman.animate();
-							ghost.move(grid.tiles);
-							ghost.animate();
+							// ghost.move(grid.tiles);
+							// ghost.animate();
 							grid.render();
 							pacman.render();
 							render_other_player();
