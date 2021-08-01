@@ -162,22 +162,6 @@ void initGame()
 	gameOn = true;
 	curLevel = 1;
 	initLevel(0);
-	pl[0].loadFromFile("Assets/Images/pac_left1.png");
-	pl[1].loadFromFile("Assets/Images/pac_left2.png");
-	pl[2].loadFromFile("Assets/Images/pac_left1.png");
-	pl[3].loadFromFile("Assets/Images/pacman.png");
-	pr[0].loadFromFile("Assets/Images/pac_right1.png");
-	pr[1].loadFromFile("Assets/Images/pac_right2.png");
-	pr[2].loadFromFile("Assets/Images/pac_right1.png");
-	pr[3].loadFromFile("Assets/Images/pacman.png");
-	pu[0].loadFromFile("Assets/Images/pac_up1.png");
-	pu[1].loadFromFile("Assets/Images/pac_up2.png");
-	pu[2].loadFromFile("Assets/Images/pac_up1.png");
-	pu[3].loadFromFile("Assets/Images/pacman.png");
-	pd[0].loadFromFile("Assets/Images/pac_down1.png");
-	pd[1].loadFromFile("Assets/Images/pac_down2.png");
-	pd[2].loadFromFile("Assets/Images/pac_down1.png");
-	pd[3].loadFromFile("Assets/Images/pacman.png");
 }
 
 void togglePause()
@@ -257,6 +241,22 @@ void handleEvent(SDL_Event &e)
 
 int main(int argc, char *argv[])
 {
+	pl[0].loadFromFile("Assets/Images/pac_left1.png");
+	pl[1].loadFromFile("Assets/Images/pac_left2.png");
+	pl[2].loadFromFile("Assets/Images/pac_left1.png");
+	pl[3].loadFromFile("Assets/Images/pacman.png");
+	pr[0].loadFromFile("Assets/Images/pac_right1.png");
+	pr[1].loadFromFile("Assets/Images/pac_right2.png");
+	pr[2].loadFromFile("Assets/Images/pac_right1.png");
+	pr[3].loadFromFile("Assets/Images/pacman.png");
+	pu[0].loadFromFile("Assets/Images/pac_up1.png");
+	pu[1].loadFromFile("Assets/Images/pac_up2.png");
+	pu[2].loadFromFile("Assets/Images/pac_up1.png");
+	pu[3].loadFromFile("Assets/Images/pacman.png");
+	pd[0].loadFromFile("Assets/Images/pac_down1.png");
+	pd[1].loadFromFile("Assets/Images/pac_down2.png");
+	pd[2].loadFromFile("Assets/Images/pac_down1.png");
+	pd[3].loadFromFile("Assets/Images/pacman.png");
 	connection_state = argv[1];
 	App app;
 	app.Init();
@@ -577,7 +577,8 @@ int main(int argc, char *argv[])
 							pacman.render();
 							// render_other_player();
 							pl[0].render(other_pac_box.x + TILE_WIDTH / 8, other_pac_box.y + TILE_WIDTH / 8, &pacRenderRect);
-							pl[0].render(0, 0, &pacRenderRect);
+							pl[0].render(posX + 24, posY + 24, &pacRenderRect);
+							pl[0].render(posX + 24, posY + 24, &pacRenderRect);
 						}
 						if (lifes[0] == 0)
 							exit(0);

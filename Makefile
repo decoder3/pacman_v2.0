@@ -6,7 +6,7 @@ CC = g++
 
 #COMPILER_FLAGS specifies the additional compilation options we're using
 # -w suppresses all warnings
-COMPILER_FLAGS = -w -g -fsanitize=address -fsanitize=undefined -Wshadow
+COMPILER_FLAGS = -w #-g -fsanitize=address -fsanitize=undefined -Wshadow
 
 #LINKER_FLAGS specifies the libraries we're linking against
 LINKER_FLAGS = -lSDL2 -lSDL2_image -lSDL2_mixer -lSDL2_gfx -lSDL2_ttf
