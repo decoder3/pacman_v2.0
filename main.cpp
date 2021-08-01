@@ -69,6 +69,7 @@ void render_other_player()
 	default:
 		break;
 	}
+	cout << other_pac_box.x << " " << other_pac_box.y << " " << other_pac_d << endl;
 	other_pac_animIdx = (other_pac_animIdx + 1) % 2;
 	cur_texture.render(other_pac_box.x + TILE_WIDTH / 8, other_pac_box.y + TILE_WIDTH / 8, &pacRenderRect);
 }
@@ -461,11 +462,6 @@ int main(int argc, char *argv[])
 					pacman.render();
 					render_other_player();
 					ghost.render();
-					SDL_RenderPresent(gRenderer);
-					Sounds::getInstance()->playIntro();
-					SDL_Delay(4500);
-					Sounds::getInstance()->playNormalMusic();
-					firstTime = false;
 				}
 				else
 				{
@@ -600,6 +596,13 @@ int main(int argc, char *argv[])
 			modePage[modeIdx].render(0, 0, &winBox);
 		}
 		SDL_RenderPresent(gRenderer);
+		if (firstTime)
+		{
+			Sounds::getInstance()->playIntro();
+			SDL_Delay(4500);
+			Sounds::getInstance()->playNormalMusic();
+			firstTime = false;
+		}
 		SDL_Delay(45);
 	}
 }
