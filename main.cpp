@@ -600,6 +600,6 @@ int main(int argc, char *argv[])
 			modePage[modeIdx].render(0, 0, &winBox);
 		}
 		SDL_RenderPresent(gRenderer);
-		SDL_Delay(25);
+		SDL_Delay(45);
 	}
 }
