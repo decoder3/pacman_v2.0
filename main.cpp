@@ -490,8 +490,9 @@ int main(int argc, char *argv[])
 							grid.render();
 							ghost.render();
 							pacman.render();
-							// render_other_player();
+							render_other_player();
 							pl[0].render(other_pac_box.x + TILE_WIDTH / 8, other_pac_box.y + TILE_WIDTH / 8, &pacRenderRect);
+							pl[0].render(0, 0, &pacRenderRect);
 							Sounds::getInstance()->playSingleSound(Sounds::DYING);
 							SDL_Delay(1500);
 							counter = 0;
@@ -523,6 +524,7 @@ int main(int argc, char *argv[])
 							pacman.render();
 							// render_other_player();
 							pl[0].render(other_pac_box.x + TILE_WIDTH / 8, other_pac_box.y + TILE_WIDTH / 8, &pacRenderRect);
+							pl[0].render(0, 0, &pacRenderRect);
 						}
 
 						//TODO:: insert a page over here!
@@ -550,6 +552,7 @@ int main(int argc, char *argv[])
 							ghost.render();
 							// render_other_player();
 							pl[0].render(other_pac_box.x + TILE_WIDTH / 8, other_pac_box.y + TILE_WIDTH / 8, &pacRenderRect);
+							pl[0].render(0, 0, &pacRenderRect);
 							Sounds::getInstance()->playSingleSound(Sounds::DYING);
 							SDL_Delay(1500);
 							counter = 0;
@@ -574,6 +577,7 @@ int main(int argc, char *argv[])
 							pacman.render();
 							// render_other_player();
 							pl[0].render(other_pac_box.x + TILE_WIDTH / 8, other_pac_box.y + TILE_WIDTH / 8, &pacRenderRect);
+							pl[0].render(0, 0, &pacRenderRect);
 						}
 						if (lifes[0] == 0)
 							exit(0);
