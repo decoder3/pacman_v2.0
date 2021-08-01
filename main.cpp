@@ -241,6 +241,14 @@ void handleEvent(SDL_Event &e)
 
 int main(int argc, char *argv[])
 {
+	connection_state = argv[1];
+	App app;
+	app.Init();
+	initMain();
+	initMode();
+	Grid grid;
+	Pacman pacman;
+	Ghost ghost;
 	pl[0].loadFromFile("Assets/Images/pac_left1.png");
 	pl[1].loadFromFile("Assets/Images/pac_left2.png");
 	pl[2].loadFromFile("Assets/Images/pac_left1.png");
@@ -257,14 +265,6 @@ int main(int argc, char *argv[])
 	pd[1].loadFromFile("Assets/Images/pac_down2.png");
 	pd[2].loadFromFile("Assets/Images/pac_down1.png");
 	pd[3].loadFromFile("Assets/Images/pacman.png");
-	connection_state = argv[1];
-	App app;
-	app.Init();
-	initMain();
-	initMode();
-	Grid grid;
-	Pacman pacman;
-	Ghost ghost;
 
 	SDL_Rect smallmenu;
 	smallmenu.x = 250;
