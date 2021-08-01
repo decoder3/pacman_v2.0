@@ -295,7 +295,6 @@ int main(int argc, char *argv[])
 		{
 			if (modeIdx == 0)
 			{
-
 				SDL_RenderCopy(gRenderer, gameBack, NULL, NULL);
 				if (firstTime)
 				{

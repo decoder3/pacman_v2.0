@@ -154,7 +154,7 @@ inline SDL_Texture *resumeBack = nullptr;
 inline SDL_Texture *menuBack = nullptr, *levelsBack = nullptr,
 				   *winBack = nullptr, *loseBack = nullptr,
 				   *soundBack = nullptr, *quitBack = nullptr,
-				   *gameBack = nullptr, *gameBack2 = nullptr;
+				   *gameBack = nullptr, *gameBack2 = nullptr, *pausePage = nullptr;
 
 inline SDL_Rect pacBox = {posX + 32, posY + 32, 32, 32};
 
