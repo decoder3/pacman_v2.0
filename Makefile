@@ -12,7 +12,7 @@ COMPILER_FLAGS = -w -g -fsanitize=address -fsanitize=undefined -Wshadow
 LINKER_FLAGS = -lSDL2 -lSDL2_image -lSDL2_mixer -lSDL2_gfx -lSDL2_ttf
 
 #OBJ_NAME specifies the name of our exectuable
-OBJ_NAME = main
+OBJ_NAME = main.o
 
 #This is the target that compiles our executable
 all : $(OBJS)
