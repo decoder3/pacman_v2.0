@@ -69,8 +69,8 @@ void render_other_player()
 	default:
 		break;
 	}
-	cout << other_pac_box.x << " " << other_pac_box.y << " " << other_pac_d << endl;
-	other_pac_animIdx = (other_pac_animIdx + 1) % 2;
+	cout << other_pac_box.x << " " << other_pac_box.y << " " << other_pac_d << " " << other_pac_animIdx << endl;
+	other_pac_animIdx = (other_pac_animIdx + 1) % 4;
 	cur_texture.render(other_pac_box.x + TILE_WIDTH / 8, other_pac_box.y + TILE_WIDTH / 8, &pacRenderRect);
 }
 
@@ -488,9 +488,10 @@ int main(int argc, char *argv[])
 						{
 							pacman.death();
 							grid.render();
-							pacman.render();
-							render_other_player();
 							ghost.render();
+							pacman.render();
+							// render_other_player();
+							pl[0].render(other_pac_box.x + TILE_WIDTH / 8, other_pac_box.y + TILE_WIDTH / 8, &pacRenderRect);
 							Sounds::getInstance()->playSingleSound(Sounds::DYING);
 							SDL_Delay(1500);
 							counter = 0;
@@ -518,9 +519,10 @@ int main(int argc, char *argv[])
 							ghost.move(grid.tiles);
 							ghost.animate();
 							grid.render();
-							pacman.render();
-							render_other_player();
 							ghost.render();
+							pacman.render();
+							// render_other_player();
+							pl[0].render(other_pac_box.x + TILE_WIDTH / 8, other_pac_box.y + TILE_WIDTH / 8, &pacRenderRect);
 						}
 
 						//TODO:: insert a page over here!
@@ -546,6 +548,8 @@ int main(int argc, char *argv[])
 							grid.render();
 							pacman.render();
 							ghost.render();
+							// render_other_player();
+							pl[0].render(other_pac_box.x + TILE_WIDTH / 8, other_pac_box.y + TILE_WIDTH / 8, &pacRenderRect);
 							Sounds::getInstance()->playSingleSound(Sounds::DYING);
 							SDL_Delay(1500);
 							counter = 0;
@@ -566,9 +570,10 @@ int main(int argc, char *argv[])
 							// ghost.move(grid.tiles);
 							// ghost.animate();
 							grid.render();
-							pacman.render();
-							render_other_player();
 							ghost.render();
+							pacman.render();
+							// render_other_player();
+							pl[0].render(other_pac_box.x + TILE_WIDTH / 8, other_pac_box.y + TILE_WIDTH / 8, &pacRenderRect);
 						}
 						if (lifes[0] == 0)
 							exit(0);
