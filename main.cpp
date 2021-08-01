@@ -156,7 +156,7 @@ void initGame()
 			cout << abc << endl;
 		}
 	}
-	lifes[0] = lifes[1] = 10;
+	lifes[0] = lifes[1] = 3;
 	score[0] = score[1] = 0;
 	gameOn = true;
 	curLevel = 1;
