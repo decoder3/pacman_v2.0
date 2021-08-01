@@ -282,12 +282,9 @@ int main(int argc, char *argv[])
 				flag = false;
 				break;
 			}
-			cout << "e1" << endl;
 			handleEvent(e);
-			cout << "e2" << endl;
 			if (gameOn)
 				pacman.handleEvent(e);
-			cout << "e3" << endl;
 		}
 		if (!flag)
 			break;
@@ -296,11 +293,9 @@ int main(int argc, char *argv[])
 		cout << curPage << endl;
 		if (gameOn)
 		{
-			cout << "gameon" << endl;
 			if (modeIdx == 0)
 			{
 
-				cout << pacBox.x << " " << pacBox.y << endl;
 				SDL_RenderCopy(gRenderer, gameBack, NULL, NULL);
 				if (firstTime)
 				{
