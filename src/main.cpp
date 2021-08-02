@@ -308,7 +308,7 @@ int main(int argc, char *argv[])
 					//TODO:: insert a page over here!
 					if (lifes[0] == 0)
 						exit(0);
-					if (levelScore[curLevel - 1][0] + levelScore[curLevel - 1][1] == 50)
+					if (levelScore[curLevel - 1][0] + levelScore[curLevel - 1][1] == totalCoins[curLevel - 1])
 					{
 						curLevel++;
 						if (curLevel == 6)
@@ -474,7 +474,7 @@ int main(int argc, char *argv[])
 						//TODO:: insert a page over here!
 						if (lifes[0] == 0)
 							exit(0);
-						if (levelScore[curLevel - 1][0] + levelScore[curLevel - 1][1] == 50)
+						if (levelScore[curLevel - 1][0] + levelScore[curLevel - 1][1] == totalCoins[curLevel - 1])
 						{
 							curLevel++;
 							if (curLevel == 6)
@@ -520,7 +520,7 @@ int main(int argc, char *argv[])
 						pacman.render();
 						if (lifes[0] == 0)
 							exit(0);
-						if (levelScore[curLevel - 1][0] + levelScore[curLevel - 1][1] == 50)
+						if (levelScore[curLevel - 1][0] + levelScore[curLevel - 1][1] == totalCoins[curLevel - 1])
 						{
 							curLevel++;
 							if (curLevel == 6)

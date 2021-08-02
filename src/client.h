@@ -27,7 +27,8 @@ static int connect_client()
 
 	// tere me mera mere me tera ip
 	// Convert IPv4 and IPv6 addresses from text to binary form
-	if (inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr) <= 0)
+	// 10.184.26.9
+	if (inet_pton(AF_INET, "10.184.39.81", &serv_addr.sin_addr) <= 0)
 	{
 		printf("\nInvalid address/ Address not supported \n");
 		return false;
