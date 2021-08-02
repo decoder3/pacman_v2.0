@@ -1,19 +1,25 @@
-#OBJS specifies which files to compile as part of the project
-OBJS =LTexture.cpp Tile.cpp grid.cpp app.cpp pacman.cpp main.cpp level.cpp play.cpp ghost.cpp sounds.cpp
+TARGET = pac
+SRCS = $(wildcard $(SRC_DIR)/*.cpp)
+OBJS = $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(SRCS))
+SRC_DIR = src
+OBJ_DIR = build
+CXX = g++
+CXXFLAGS = -std=c++17 -O2 -Wall -Wextra -pedantic -Wformat=2 -Wstrict-aliasing=2 -MMD
+LDFLAGS = $(shell sdl2-config --cflags --libs) -lSDL2_image -lSDL2_mixer -lSDL2_ttf -lm
+DEPENDS = $(OBJS:.o=.d)
 
-#CC specifies which compiler we're using
-CC = g++
+.SUFFIXES: .cpp .o
 
-#COMPILER_FLAGS specifies the additional compilation options we're using
-# -w suppresses all warnings
-COMPILER_FLAGS = -w #-g -fsanitize=address -fsanitize=undefined -Wshadow
+all: $(TARGET)
 
-#LINKER_FLAGS specifies the libraries we're linking against
-LINKER_FLAGS = -lSDL2 -lSDL2_image -lSDL2_mixer -lSDL2_gfx -lSDL2_ttf
+$(TARGET): $(OBJS)
+	$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
 
-#OBJ_NAME specifies the name of our exectuable
-OBJ_NAME = main.o
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
+	mkdir -p $(OBJ_DIR)
+	$(CXX) $(CXXFLAGS) -c $< $(LDFLAGS) -o $@
 
-#This is the target that compiles our executable
-all : $(OBJS)
-	$(CC) $(OBJS) $(COMPILER_FLAGS) $(LINKER_FLAGS) -o $(OBJ_NAME)
+clean:
+	-rm -rf $(OBJ_DIR) $(TARGET)
+
+-include $(DEPENDS)

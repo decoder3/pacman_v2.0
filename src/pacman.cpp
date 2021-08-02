@@ -39,6 +39,31 @@ Pacman::Pacman()
 	initPlayer();
 }
 
+void Pacman::render_other_player()
+{
+	int x = other_pac_d;
+	SDL_Texture *cur_texture = nullptr;
+	switch (x)
+	{
+	case 0:
+		cur_texture = pac_left[other_pac_animIdx].mTexture;
+		break;
+	case 1:
+		cur_texture = pac_down[other_pac_animIdx].mTexture;
+		break;
+	case 2:
+		cur_texture = pac_right[other_pac_animIdx].mTexture;
+		break;
+	case 3:
+		cur_texture = pac_up[other_pac_animIdx].mTexture;
+		break;
+	}
+	// cur_texture.render(other_pac_box.x + TILE_WIDTH / 8, other_pac_box.y + TILE_WIDTH / 8, &renderSize);
+	SDL_Rect renderRectBox = {other_pac_box.x + TILE_WIDTH / 8, other_pac_box.y + TILE_WIDTH / 8, renderSize.w, renderSize.h};
+	SDL_RenderCopy(gRenderer, cur_texture, NULL, &renderRectBox);
+	// pac_right[0].render(0, 0, &renderSize);
+}
+
 void Pacman::reset()
 
 {
@@ -82,7 +107,7 @@ void Pacman::eat(bool flag)
 		int Gy = (pacBox.y + disEat - posY) / TILE_WIDTH;
 		if (isCoin[curLevel - 1][Gy][Gx])
 		{
-			Sounds::getInstance()->playMunch();
+			// Sounds::getInstance()->playMunch();
 			isCoin[curLevel - 1][Gy][Gx] = false;
 			score[0]++;
 			levelScore[curLevel - 1][0]++;

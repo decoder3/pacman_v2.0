@@ -8,12 +8,12 @@
 class Pacman
 {
 	LTexture pac_cur;
-	LTexture pac_left[4], pac_right[4], pac_up[4], pac_down[4];
 	SDL_Rect renderSize;
 	int nextDir;
 
 public:
 	Pacman();
+	LTexture pac_left[4], pac_right[4], pac_up[4], pac_down[4];
 	int PAC_VEL;
 	void handleEvent(SDL_Event &e);
 	void move(Tile *tiles[]);
@@ -21,6 +21,7 @@ public:
 	void death();
 	void animate();
 	void initPlayer();
+	void render_other_player();
 	void render();
 	void reset();
 	void eat(bool flag);

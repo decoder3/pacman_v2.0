@@ -68,6 +68,8 @@ inline string to_string(A v)
 	return res;
 }
 
+inline int tracker = 0;
+
 inline int modeIdx = 0;
 inline string connection_state = "";
 

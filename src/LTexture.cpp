@@ -176,7 +176,10 @@ void LTexture::render(int x, int y, SDL_Rect *clip, double angle,
 	}
 
 	// Render to screen
-	SDL_RenderCopyEx(gRenderer, mTexture, NULL, &renderQuad, angle, center, flip);
+	if (SDL_RenderCopyEx(gRenderer, mTexture, NULL, &renderQuad, angle, center, flip) < 0)
+	{
+		cout << "Error Rendering Texture " << SDL_GetError() << " " << tracker++ << endl;
+	}
 }
 
 int LTexture::getWidth() { return mWidth; }

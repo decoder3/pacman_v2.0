@@ -9,10 +9,6 @@
 #include "sounds.h"
 mt19937_64 rng(std::chrono::steady_clock::now().time_since_epoch().count());
 
-LTexture pl[4], pd[4], pr[4], pu[4];
-int pacRenderSz = 24 * scale;
-SDL_Rect pacRenderRect = {0, 0, pacRenderSz, pacRenderSz};
-
 int mainIdx = 0;
 bool gameOn = false;
 bool gamePause = false;
@@ -47,42 +43,6 @@ void initMain()
 	}
 }
 
-void render_other_player()
-{
-	int x = other_pac_d;
-	LTexture cur_texture;
-	switch (x)
-	{
-	case 0:
-		cur_texture = pl[other_pac_animIdx];
-		break;
-	case 1:
-		cur_texture = pd[other_pac_animIdx];
-		break;
-	case 2:
-		cur_texture = pr[other_pac_animIdx];
-		break;
-	case 3:
-		cur_texture = pu[other_pac_animIdx];
-		break;
-	default:
-		break;
-	}
-	// cout << other_pac_box.x << " " << other_pac_box.y << " " << other_pac_d << " " << other_pac_animIdx << endl;
-	other_pac_animIdx = (other_pac_animIdx + 1) % 4;
-	cur_texture.render(other_pac_box.x + TILE_WIDTH / 8, other_pac_box.y + TILE_WIDTH / 8, &pacRenderRect);
-}
-
-void other_pac_reset()
-{
-	// int idx = connection_state == "server" ? 1 : 0;
-	// int X = TILE_WIDTH * pac_coor[curLevel - 1][idx].first;
-	// int Y = TILE_WIDTH * pac_coor[curLevel - 1][idx].second;
-	// other_pac_box = {posX + X, posY + Y, TILE_WIDTH, TILE_WIDTH};
-	// other_pac_d = idx ? 2 : 0;
-	// other_pac_animIdx = 0;
-}
-
 void initMode()
 {
 	for (int i = 0; i < 2; i++)
@@ -99,7 +59,8 @@ void initLevel(int idx)
 {
 	totalCoins[idx] = 0;
 	string matrix_path = "Assets/levels/level";
-	char c = '0' + (idx + 1);
+	int lev = idx + 1;
+	char c = '0' + lev;
 	matrix_path += c;
 	matrix_path += ".map";
 	ifstream ss;
@@ -127,6 +88,19 @@ void initLevel(int idx)
 void initGame()
 {
 
+	string temp = modeIdx == 0 ? "pac-mam_singlePlayer" : (connection_state == "server" ? "server" : "client");
+	const char *winName = temp.c_str();
+	if (modeIdx == 1)
+	{
+		if (connection_state == "server")
+		{
+			winPosX -= 300;
+		}
+		else
+			winPosX += 300;
+	}
+	SDL_SetWindowPosition(gWindow, winPosX, winPosY);
+	SDL_SetWindowTitle(gWindow, winName);
 	if (modeIdx == 1)
 	{
 		if (connection_state == "server")
@@ -156,7 +130,7 @@ void initGame()
 			cout << abc << endl;
 		}
 	}
-	lifes[0] = lifes[1] = 3;
+	lifes[0] = lifes[1] = 10;
 	score[0] = score[1] = 0;
 	gameOn = true;
 	curLevel = 1;
@@ -248,28 +222,6 @@ int main(int argc, char *argv[])
 	Grid grid;
 	Pacman pacman;
 	Ghost ghost;
-	pl[0].loadFromFile("Assets/Images/pac_left1.png");
-	pl[1].loadFromFile("Assets/Images/pac_left2.png");
-	pl[2].loadFromFile("Assets/Images/pac_left1.png");
-	pl[3].loadFromFile("Assets/Images/pacman.png");
-	pr[0].loadFromFile("Assets/Images/pac_right1.png");
-	pr[1].loadFromFile("Assets/Images/pac_right2.png");
-	pr[2].loadFromFile("Assets/Images/pac_right1.png");
-	pr[3].loadFromFile("Assets/Images/pacman.png");
-	pu[0].loadFromFile("Assets/Images/pac_up1.png");
-	pu[1].loadFromFile("Assets/Images/pac_up2.png");
-	pu[2].loadFromFile("Assets/Images/pac_up1.png");
-	pu[3].loadFromFile("Assets/Images/pacman.png");
-	pd[0].loadFromFile("Assets/Images/pac_down1.png");
-	pd[1].loadFromFile("Assets/Images/pac_down2.png");
-	pd[2].loadFromFile("Assets/Images/pac_down1.png");
-	pd[3].loadFromFile("Assets/Images/pacman.png");
-
-	SDL_Rect smallmenu;
-	smallmenu.x = 250;
-	smallmenu.y = 200;
-	smallmenu.w = 900;
-	smallmenu.h = 600;
 
 	SDL_Event e;
 	bool flag = true;
@@ -290,7 +242,6 @@ int main(int argc, char *argv[])
 			break;
 		SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 0xff);
 		SDL_RenderClear(gRenderer);
-		cout << curPage << endl;
 		if (gameOn)
 		{
 			if (modeIdx == 0)
@@ -303,6 +254,12 @@ int main(int argc, char *argv[])
 					grid.render();
 					pacman.render();
 					ghost.render();
+					SDL_RenderPresent(gRenderer);
+					// Sounds::getInstance()->playIntro();
+					// SDL_Delay(4500);
+					// Sounds::getInstance()->playNormalMusic();
+					firstTime = false;
+					continue;
 				}
 				else
 				{
@@ -325,12 +282,10 @@ int main(int argc, char *argv[])
 					if (x != -1)
 					{
 						pacman.death();
-						// ghost.pacDeath(x);
 						grid.render();
 						pacman.render();
 						ghost.render();
-						Sounds::getInstance()->playSingleSound(Sounds::DYING);
-						// Mix_PlayChannel(-1, death, 0.5);
+						// Sounds::getInstance()->playSingleSound(Sounds::DYING);
 						SDL_Delay(1500);
 						counter = 0;
 						ghost.reset();
@@ -353,7 +308,7 @@ int main(int argc, char *argv[])
 					//TODO:: insert a page over here!
 					if (lifes[0] == 0)
 						exit(0);
-					if (levelScore[curLevel - 1][0] + levelScore[curLevel - 1][1] == totalCoins[curLevel - 1])
+					if (levelScore[curLevel - 1][0] + levelScore[curLevel - 1][1] == 50)
 					{
 						curLevel++;
 						if (curLevel == 6)
@@ -456,8 +411,14 @@ int main(int argc, char *argv[])
 					grid.loadTiles("Assets/levels/level" + to_string(curLevel) + ".map");
 					grid.render();
 					pacman.render();
-					render_other_player();
+					pacman.render_other_player();
 					ghost.render();
+					SDL_RenderPresent(gRenderer);
+					Sounds::getInstance()->playIntro();
+					SDL_Delay(4500);
+					Sounds::getInstance()->playNormalMusic();
+					firstTime = false;
+					continue;
 				}
 				else
 				{
@@ -483,12 +444,6 @@ int main(int argc, char *argv[])
 						if (x != -1)
 						{
 							pacman.death();
-							grid.render();
-							ghost.render();
-							pacman.render();
-							render_other_player();
-							pl[0].render(other_pac_box.x + TILE_WIDTH / 8, other_pac_box.y + TILE_WIDTH / 8, &pacRenderRect);
-							pl[0].render(0, 0, &pacRenderRect);
 							Sounds::getInstance()->playSingleSound(Sounds::DYING);
 							SDL_Delay(1500);
 							counter = 0;
@@ -497,10 +452,6 @@ int main(int argc, char *argv[])
 						}
 						else if (y != -1)
 						{
-							grid.render();
-							pacman.render();
-							render_other_player();
-							ghost.render();
 							counter = 0;
 							ghost.reset();
 							lifes[1]--;
@@ -514,16 +465,16 @@ int main(int argc, char *argv[])
 							pacman.animate();
 							ghost.move(grid.tiles);
 							ghost.animate();
-							grid.render();
-							ghost.render();
-							pacman.render();
-							render_other_player();
 						}
 
+						grid.render();
+						ghost.render();
+						pacman.render_other_player();
+						pacman.render();
 						//TODO:: insert a page over here!
 						if (lifes[0] == 0)
 							exit(0);
-						if (levelScore[curLevel - 1][0] + levelScore[curLevel - 1][1] == totalCoins[curLevel - 1])
+						if (levelScore[curLevel - 1][0] + levelScore[curLevel - 1][1] == 50)
 						{
 							curLevel++;
 							if (curLevel == 6)
@@ -540,10 +491,6 @@ int main(int argc, char *argv[])
 						if (x != -1)
 						{
 							pacman.death();
-							grid.render();
-							pacman.render();
-							ghost.render();
-							render_other_player();
 							Sounds::getInstance()->playSingleSound(Sounds::DYING);
 							SDL_Delay(1500);
 							counter = 0;
@@ -552,10 +499,6 @@ int main(int argc, char *argv[])
 						}
 						else if (y != -1)
 						{
-							grid.render();
-							pacman.render();
-							render_other_player();
-							ghost.render();
 							counter = 0;
 							ghost.reset();
 							lifes[1]--;
@@ -570,14 +513,14 @@ int main(int argc, char *argv[])
 							pacman.animate();
 							// ghost.move(grid.tiles);
 							// ghost.animate();
-							grid.render();
-							ghost.render();
-							pacman.render();
-							render_other_player();
 						}
+						grid.render();
+						ghost.render();
+						pacman.render_other_player();
+						pacman.render();
 						if (lifes[0] == 0)
 							exit(0);
-						if (levelScore[curLevel - 1][0] + levelScore[curLevel - 1][1] == totalCoins[curLevel - 1])
+						if (levelScore[curLevel - 1][0] + levelScore[curLevel - 1][1] == 50)
 						{
 							curLevel++;
 							if (curLevel == 6)
@@ -601,13 +544,6 @@ int main(int argc, char *argv[])
 			modePage[modeIdx].render(0, 0, &winBox);
 		}
 		SDL_RenderPresent(gRenderer);
-		if (firstTime)
-		{
-			Sounds::getInstance()->playIntro();
-			SDL_Delay(4500);
-			Sounds::getInstance()->playNormalMusic();
-			firstTime = false;
-		}
 		SDL_Delay(45);
 	}
 	return 0;
